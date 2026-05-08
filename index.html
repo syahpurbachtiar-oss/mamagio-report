@@ -22,25 +22,33 @@
         .page-content { display: none; }
         .page-content.active { display: block; }
 
-        /* Stats & Cards */
-        .stats-grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(150px, 1fr)); gap: 15px; margin-bottom: 20px; }
+        /* Stats Cards */
+        .stats-grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(200px, 1fr)); gap: 15px; margin-bottom: 20px; }
         .stat-card { background: white; padding: 20px; border-radius: 12px; box-shadow: 0 4px 6px rgba(0,0,0,0.05); text-align: center; }
-        .stat-card p { margin: 10px 0 0; font-size: 1.4rem; font-weight: bold; }
+        .stat-card p { margin: 10px 0 0; font-size: 1.5rem; font-weight: bold; }
         
         /* Input Form */
         .input-box { background: white; padding: 20px; border-radius: 12px; margin-bottom: 20px; border-top: 4px solid var(--primary); }
         .input-row { display: flex; gap: 10px; margin-top: 15px; }
-        input { flex: 1; padding: 12px; border: 1px solid #ddd; border-radius: 8px; outline: none; }
-        .btn-save { background: #e74c3c; color: white; border: none; padding: 10px 20px; border-radius: 8px; font-weight: bold; cursor: pointer; }
+        input { flex: 1; padding: 12px; border: 1px solid #ddd; border-radius: 8px; }
+        .btn-save { background: #e74c3c; color: white; border: none; padding: 10px 25px; border-radius: 8px; font-weight: bold; cursor: pointer; }
 
         /* Table */
         .table-card { background: white; padding: 20px; border-radius: 12px; box-shadow: 0 4px 6px rgba(0,0,0,0.05); }
-        table { width: 100%; border-collapse: collapse; margin-top: 15px; }
+        .table-container { overflow-x: auto; }
+        table { width: 100%; border-collapse: collapse; margin-top: 15px; min-width: 600px; }
         th { background: #f8f9fa; text-align: left; padding: 12px; border-bottom: 2px solid #eee; }
         td { padding: 12px; border-bottom: 1px solid #eee; }
         .summary-row { background: #fff3e0; font-weight: bold; }
 
         .ai-chat { background: #1a2a47; color: white; padding: 15px; border-radius: 12px; display: flex; align-items: center; gap: 15px; margin-top: 20px; }
+
+        @media (max-width: 768px) {
+            body { flex-direction: column; }
+            .sidebar { width: 100%; display: flex; justify-content: space-around; padding: 10px 0; }
+            .sidebar h2 { display: none; }
+            .input-row { flex-direction: column; }
+        }
     </style>
 </head>
 <body>
@@ -53,57 +61,59 @@
     <div class="main">
         <div id="dashboard" class="page-content active">
             <div class="stats-grid">
-                <div class="stat-card"><h3>Omzet</h3><p id="txtOmzet" style="color:#1abc9c">Rp 0</p></div>
-                <div class="stat-card"><h3>Biaya</h3><p id="txtBiaya" style="color:#e74c3c">Rp 0</p></div>
+                <div class="stat-card"><h3>Omzet (Sheet1)</h3><p id="txtOmzet" style="color:#1abc9c">Rp 0</p></div>
+                <div class="stat-card"><h3>Biaya (Sheet2)</h3><p id="txtBiaya" style="color:#e74c3c">Rp 0</p></div>
                 <div class="stat-card"><h3>Profit</h3><p id="txtProfit" style="color:#3498db">Rp 0</p></div>
             </div>
             <div class="input-box">
-                <b><i class="fas fa-plus-circle"></i> Catat Belanja Baru (ke Sheet 2)</b>
+                <b>Catat Pengeluaran Baru (Sheet 2)</b>
                 <div class="input-row">
                     <input type="text" id="nama" placeholder="Barang...">
                     <input type="number" id="harga" placeholder="Harga Rp">
                     <button class="btn-save" id="btnSimpan" onclick="simpanBelanja()">SIMPAN DATA</button>
                 </div>
             </div>
-            <div style="background:white; padding:20px; border-radius:12px;"><canvas id="chartLine"></canvas></div>
+            <div style="background:white; padding:20px; border-radius:12px; min-height: 300px;"><canvas id="chartUtama"></canvas></div>
         </div>
 
         <div id="pengeluaran" class="page-content">
             <div class="table-card">
-                <h2><i class="fas fa-history"></i> Riwayat Pengeluaran (Sheet 2)</h2>
-                <table>
-                    <thead>
-                        <tr>
-                            <th>Hari</th>
-                            <th>Tanggal</th>
-                            <th>Jam</th>
-                            <th>Pengeluaran</th>
-                            <th>Nominal</th>
-                        </tr>
-                    </thead>
-                    <tbody id="tableBody"></tbody>
-                    <tfoot>
-                        <tr class="summary-row">
-                            <td colspan="3" id="totalQty" style="text-align:right">Jumlah: 0 Item</td>
-                            <td colspan="2" id="totalNominal">Total: Rp 0</td>
-                        </tr>
-                    </tfoot>
-                </table>
+                <h2>Riwayat Belanja (Sheet 2)</h2>
+                <div class="table-container">
+                    <table>
+                        <thead>
+                            <tr>
+                                <th>Hari</th>
+                                <th>Tanggal</th>
+                                <th>Jam</th>
+                                <th>Nama Barang</th>
+                                <th>Nominal</th>
+                            </tr>
+                        </thead>
+                        <tbody id="tableBody"></tbody>
+                        <tfoot>
+                            <tr class="summary-row">
+                                <td colspan="3" id="totalQty" style="text-align:right">Jumlah: 0 Item</td>
+                                <td colspan="2" id="totalNominal">Total: Rp 0</td>
+                            </tr>
+                        </tfoot>
+                    </table>
+                </div>
             </div>
         </div>
 
         <div class="ai-chat">
-            <i class="fas fa-robot" style="font-size: 2rem; color: var(--primary);"></i>
+            <i class="fas fa-robot" style="font-size: 1.8rem; color: var(--primary);"></i>
             <div>
-                <b style="color:var(--primary)">Analis AI Mama Gio:</b><br>
-                <span id="aiMsg">Mengsinkronkan data Sheet1 & Sheet2...</span>
+                <b style="color:var(--primary)">Sistem Mama Gio:</b><br>
+                <span id="aiMsg">Sinkronisasi data dengan Google Sheets...</span>
             </div>
         </div>
     </div>
 
     <script>
-        // Link Apps Script yang baru kamu kasih
-        const SCRIPT_URL = 'https://script.google.com/macros/s/AKfycbxew8CfGQ4s5-O6ekFfKjVKkIx2tICC-RctxnlOhrBMX07G4Wfz-97q_exyFbDIGEiL/exec';
+        // LINK BARU YANG KAMU KASIH
+        const SCRIPT_URL = 'https://script.google.com/macros/s/AKfycbwNIIVGQuk5ZVPkIWviMkzyGzx5H_go1y7-9YaDzFNwbBi9Ds7mAUN_hxOby0SBRMYB/exec';
 
         let myChart;
 
@@ -118,71 +128,76 @@
             try {
                 const res = await fetch(SCRIPT_URL);
                 const data = await res.json();
-                updateUI(data);
+                updateDashboard(data);
                 renderTable(data);
-            } catch (e) { document.getElementById('aiMsg').innerText = "Gagal memuat database."; }
+                document.getElementById('aiMsg').innerText = "Koneksi Berhasil!";
+            } catch (e) { document.getElementById('aiMsg').innerText = "Gagal memuat data."; }
         }
 
-        function updateUI(data) {
-            let omzet = 0, biaya = 0;
+        function updateDashboard(data) {
+            let o = 0, b = 0;
             data.forEach(d => {
-                let v = parseInt(d.harga) || 0;
-                if(d.tipe === 'Masuk') omzet += v;
-                else biaya += v;
+                let nom = parseInt(String(d.harga).replace(/[^0-9]/g, '')) || 0;
+                if(d.tipe === 'Masuk') o += nom;
+                else b += nom;
             });
-            document.getElementById('txtOmzet').innerText = "Rp " + omzet.toLocaleString();
-            document.getElementById('txtBiaya').innerText = "Rp " + biaya.toLocaleString();
-            document.getElementById('txtProfit').innerText = "Rp " + (omzet - biaya).toLocaleString();
-            renderChart(omzet, biaya);
+            document.getElementById('txtOmzet').innerText = "Rp " + o.toLocaleString('id-ID');
+            document.getElementById('txtBiaya').innerText = "Rp " + b.toLocaleString('id-ID');
+            document.getElementById('txtProfit').innerText = "Rp " + (o - b).toLocaleString('id-ID');
+            showChart(o, b);
         }
 
         function renderTable(data) {
             const tbody = document.getElementById('tableBody');
             tbody.innerHTML = "";
-            let total = 0, count = 0;
-            data.filter(d => d.tipe === 'Keluar').forEach(d => {
-                count++;
-                total += parseInt(d.harga) || 0;
-                tbody.innerHTML += `<tr>
-                    <td>${d.hari || '-'}</td>
-                    <td>${d.tanggal || '-'}</td>
-                    <td>${d.jam || '-'}</td>
-                    <td>${d.nama}</td>
-                    <td>Rp ${parseInt(d.harga).toLocaleString()}</td>
-                </tr>`;
+            let tot = 0, qty = 0;
+            // Filter hanya Keluar, Nama Barang ada, dan Nominal bukan NaN/0
+            data.filter(d => d.tipe === 'Keluar' && d.nama).forEach(d => {
+                let nom = parseInt(String(d.harga).replace(/[^0-9]/g, '')) || 0;
+                if(nom > 0) {
+                    qty++;
+                    tot += nom;
+                    // Format Jam: pastikan tidak ada detik (ambil HH.mm)
+                    let jamCek = d.jam.split('.').slice(0,2).join('.');
+                    tbody.innerHTML += `<tr>
+                        <td>${d.hari || '-'}</td>
+                        <td>${d.tanggal || '-'}</td>
+                        <td>${jamCek || '-'}</td>
+                        <td>${d.nama}</td>
+                        <td>Rp ${nom.toLocaleString('id-ID')}</td>
+                    </tr>`;
+                }
             });
-            document.getElementById('totalQty').innerText = "Jumlah: " + count + " Item";
-            document.getElementById('totalNominal').innerText = "Total: Rp " + total.toLocaleString();
+            document.getElementById('totalQty').innerText = "Jumlah: " + qty + " Item";
+            document.getElementById('totalNominal').innerText = "Total: Rp " + tot.toLocaleString('id-ID');
         }
 
-        function renderChart(o, b) {
-            const ctx = document.getElementById('chartLine').getContext('2d');
+        function showChart(o, b) {
+            const ctx = document.getElementById('chartUtama').getContext('2d');
             if(myChart) myChart.destroy();
             myChart = new Chart(ctx, {
                 type: 'bar',
                 data: {
-                    labels: ['Masuk (Sheet1)', 'Keluar (Sheet2)'],
-                    datasets: [{ data: [o, b], backgroundColor: ['#1abc9c', '#e74c3c'] }]
-                }
+                    labels: ['Masuk', 'Keluar'],
+                    datasets: [{ data: [o, b], backgroundColor: ['#1abc9c', '#e74c3c'], borderRadius: 10 }]
+                },
+                options: { maintainAspectRatio: false }
             });
         }
 
         async function simpanBelanja() {
             const n = document.getElementById('nama').value;
             const h = document.getElementById('harga').value;
-            if(!n || !h) return alert("Lengkapi data!");
+            if(!n || !h) return alert("Isi Data!");
             const btn = document.getElementById('btnSimpan');
-            btn.innerText = "KIRIM...";
-            btn.disabled = true;
-
+            btn.innerText = "KIRIM..."; btn.disabled = true;
             try {
                 await fetch(SCRIPT_URL, { 
                     method: 'POST', 
                     mode: 'no-cors', 
                     body: JSON.stringify({ nama: n, harga: parseInt(h), tipe: 'Keluar' }) 
                 });
-                alert("Tercatat ke Sheet 2!");
-                location.reload();
+                alert("Berhasil!"); location.reload();
             } catch (e) { alert("Gagal!"); btn.disabled = false; }
         }
         fetchData();
