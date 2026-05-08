@@ -9,41 +9,31 @@
     <style>
         :root { --sidebar: #1a2a47; --primary: #ff9800; --bg: #f0f2f5; }
         body { margin: 0; display: flex; background: var(--bg); font-family: 'Segoe UI', sans-serif; min-height: 100vh; }
-        
-        /* Sidebar */
         .sidebar { width: 220px; background: var(--sidebar); color: white; flex-shrink: 0; padding: 20px 0; }
         .sidebar h2 { color: var(--primary); text-align: center; font-size: 1.1rem; margin-bottom: 30px; letter-spacing: 1px; }
         .nav-item { padding: 15px 25px; color: #adb5bd; display: flex; align-items: center; cursor: pointer; transition: 0.3s; }
         .nav-item:hover { background: #2c3e50; color: white; }
         .nav-item.active { background: #2c3e50; color: var(--primary); border-left: 4px solid var(--primary); }
-        
-        /* Main Content */
         .main { flex-grow: 1; padding: 20px; overflow-y: auto; }
         .page-content { display: none; }
         .page-content.active { display: block; }
-
-        /* Stats Cards */
         .stats-grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(200px, 1fr)); gap: 15px; margin-bottom: 20px; }
         .stat-card { background: white; padding: 20px; border-radius: 12px; box-shadow: 0 4px 6px rgba(0,0,0,0.05); text-align: center; }
-        .stat-card h3 { margin: 0; font-size: 0.85rem; color: #7f8c8d; text-transform: uppercase; }
         .stat-card p { margin: 10px 0 0; font-size: 1.5rem; font-weight: bold; }
-        
-        /* Form Box */
         .input-box { background: white; padding: 20px; border-radius: 12px; margin-bottom: 20px; border-top: 4px solid var(--primary); box-shadow: 0 4px 6px rgba(0,0,0,0.05); }
         .input-row { display: flex; gap: 10px; margin-top: 15px; }
         input { flex: 1; padding: 12px; border: 1px solid #ddd; border-radius: 8px; }
         .btn-save { background: #e74c3c; color: white; border: none; padding: 10px 25px; border-radius: 8px; font-weight: bold; cursor: pointer; }
-
-        /* Table Design */
         .table-card { background: white; padding: 20px; border-radius: 12px; box-shadow: 0 4px 6px rgba(0,0,0,0.05); }
-        .table-container { overflow-x: auto; }
         table { width: 100%; border-collapse: collapse; margin-top: 15px; min-width: 600px; }
-        th { background: #f8f9fa; text-align: left; padding: 12px; border-bottom: 2px solid #eee; color: #2c3e50; }
-        td { padding: 12px; border-bottom: 1px solid #eee; color: #34495e; }
-        .summary-row { background: #fff3e0; font-weight: bold; color: #2c3e50; }
-
-        /* Footer Status */
-        .ai-chat { background: #1a2a47; color: white; padding: 15px; border-radius: 12px; display: flex; align-items: center; gap: 15px; margin-top: 20px; }
+        th { background: #f8f9fa; text-align: left; padding: 12px; border-bottom: 2px solid #eee; }
+        td { padding: 12px; border-bottom: 1px solid #eee; }
+        .summary-row { background: #fff3e0; font-weight: bold; }
+        
+        /* Gaya Kotak AI Baru */
+        .ai-card { background: #ffffff; padding: 20px; border-radius: 12px; border-left: 5px solid #6c5ce7; margin-top: 20px; box-shadow: 0 4px 6px rgba(0,0,0,0.05); }
+        .ai-text { background: #f9f9ff; padding: 15px; border-radius: 8px; font-size: 0.9rem; color: #2d3436; line-height: 1.6; white-space: pre-line; border: 1px dashed #6c5ce7; margin-top: 10px; }
+        .btn-copy { background: #6c5ce7; color: white; border: none; padding: 8px 15px; border-radius: 6px; font-size: 0.8rem; cursor: pointer; margin-top: 10px; font-weight: bold; }
 
         @media (max-width: 768px) {
             body { flex-direction: column; }
@@ -61,18 +51,17 @@
     </div>
 
     <div class="main">
-        
         <div id="dashboard" class="page-content active">
             <div class="stats-grid">
                 <div class="stat-card"><h3>Omzet (Sheet1)</h3><p id="txtOmzet" style="color:#1abc9c">Rp 0</p></div>
                 <div class="stat-card"><h3>Biaya (Sheet2)</h3><p id="txtBiaya" style="color:#e74c3c">Rp 0</p></div>
-                <div class="stat-card"><h3>Profit Bersih</h3><p id="txtProfit" style="color:#3498db">Rp 0</p></div>
+                <div class="stat-card"><h3>Profit</h3><p id="txtProfit" style="color:#3498db">Rp 0</p></div>
             </div>
 
             <div class="input-box">
-                <b><i class="fas fa-plus-circle"></i> Tambah Pengeluaran (Sheet 2)</b>
+                <b><i class="fas fa-plus-circle"></i> Catat Pengeluaran Baru</b>
                 <div class="input-row">
-                    <input type="text" id="nama" placeholder="Nama Barang...">
+                    <input type="text" id="nama" placeholder="Barang...">
                     <input type="number" id="harga" placeholder="Harga Rp">
                     <button class="btn-save" id="btnSimpan" onclick="simpanBelanja()">SIMPAN DATA</button>
                 </div>
@@ -81,21 +70,21 @@
             <div style="background:white; padding:20px; border-radius:12px; min-height: 300px;">
                 <canvas id="chartUtama"></canvas>
             </div>
+
+            <div class="ai-card">
+                <b><i class="fas fa-robot"></i> Analisa Strategi AI Mama Gio</b>
+                <div id="aiAnalysisText" class="ai-text">Menganalisa data penjualan & biaya...</div>
+                <button class="btn-copy" onclick="copyAIText()"><i class="fas fa-copy"></i> Salin Analisa untuk ChatGPT/Gemini</button>
+            </div>
         </div>
 
         <div id="pengeluaran" class="page-content">
             <div class="table-card">
-                <h2><i class="fas fa-history"></i> Riwayat Belanja (Sheet 2)</h2>
-                <div class="table-container">
+                <h2>Riwayat Belanja (Sheet 2)</h2>
+                <div style="overflow-x:auto">
                     <table>
                         <thead>
-                            <tr>
-                                <th>Hari</th>
-                                <th>Tanggal</th>
-                                <th>Jam</th>
-                                <th>Nama Barang</th>
-                                <th>Nominal</th>
-                            </tr>
+                            <tr><th>Hari</th><th>Tanggal</th><th>Jam</th><th>Nama Barang</th><th>Nominal</th></tr>
                         </thead>
                         <tbody id="tableBody"></tbody>
                         <tfoot>
@@ -108,19 +97,10 @@
                 </div>
             </div>
         </div>
-
-        <div class="ai-chat">
-            <i class="fas fa-robot" style="font-size: 1.8rem; color: var(--primary);"></i>
-            <div>
-                <b style="color:var(--primary)">Sistem Mama Gio:</b><br>
-                <span id="aiMsg">Sinkronisasi data Google Sheets berhasil!</span>
-            </div>
-        </div>
     </div>
 
     <script>
         const SCRIPT_URL = 'https://script.google.com/macros/s/AKfycbwNIIVGQuk5ZVPkIWviMkzyGzx5H_go1y7-9YaDzFNwbBi9Ds7mAUN_hxOby0SBRMYB/exec';
-
         let myChart;
 
         function switchPage(pageId, element) {
@@ -136,52 +116,69 @@
                 const data = await res.json();
                 updateDashboard(data);
                 renderTable(data);
-            } catch (e) {
-                document.getElementById('aiMsg').innerText = "Gagal memuat database.";
-            }
+                generateAI(data);
+            } catch (e) { console.error(e); }
         }
 
         function updateDashboard(data) {
-            let omzet = 0, biaya = 0;
+            let o = 0, b = 0;
             data.forEach(d => {
-                let nominal = parseInt(String(d.harga).replace(/[^0-9]/g, '')) || 0;
-                if(d.tipe === 'Masuk') omzet += nominal;
-                else biaya += nominal;
+                let nom = parseInt(String(d.harga).replace(/[^0-9]/g, '')) || 0;
+                if(d.tipe === 'Masuk') o += nom; else b += nom;
+            });
+            document.getElementById('txtOmzet').innerText = "Rp " + o.toLocaleString('id-ID');
+            document.getElementById('txtBiaya').innerText = "Rp " + b.toLocaleString('id-ID');
+            document.getElementById('txtProfit').innerText = "Rp " + (o - b).toLocaleString('id-ID');
+            showChart(o, b);
+        }
+
+        function generateAI(data) {
+            let produkPalingLaku = {};
+            let totalO = 0;
+            let listKeluar = [];
+
+            data.forEach(d => {
+                let n = parseInt(String(d.harga).replace(/[^0-9]/g, '')) || 0;
+                if(d.tipe === 'Masuk') {
+                    totalO += n;
+                    produkPalingLaku[d.nama] = (produkPalingLaku[d.nama] || 0) + 1;
+                } else if(d.nama) {
+                    listKeluar.push(d.nama);
+                }
             });
 
-            document.getElementById('txtOmzet').innerText = "Rp " + omzet.toLocaleString('id-ID');
-            document.getElementById('txtBiaya').innerText = "Rp " + biaya.toLocaleString('id-ID');
-            document.getElementById('txtProfit').innerText = "Rp " + (omzet - biaya).toLocaleString('id-ID');
-            
-            showChart(omzet, biaya);
+            let sorted = Object.entries(produkPalingLaku).sort((a,b) => b[1]-a[1]);
+            let unggulan = sorted.length > 0 ? sorted[0][0] : "-";
+            let kurang = sorted.length > 1 ? sorted[sorted.length-1][0] : "-";
+            let avgHarian = Math.round(totalO / 7);
+
+            let hasilAnalisa = `📊 *HASIL ANALISA AI MAMA GIO*
+            - *Produk Terlaris:* ${unggulan}
+            - *Produk Perlu Promo:* ${kurang}
+            - *Rata-rata Omzet/Hari:* Rp ${avgHarian.toLocaleString('id-ID')}
+            - *Prediksi Omzet Minggu Depan:* Rp ${(avgHarian * 7).toLocaleString('id-ID')}
+            - *Fokus Biaya:* Pastikan stok ${listKeluar[0] || 'bahan baku'} selalu terkontrol.`;
+
+            document.getElementById('aiAnalysisText').innerText = hasilAnalisa;
+        }
+
+        function copyAIText() {
+            navigator.clipboard.writeText(document.getElementById('aiAnalysisText').innerText);
+            alert("Analisa disalin! Tempel di ChatGPT/Gemini untuk konsultasi.");
         }
 
         function renderTable(data) {
             const tbody = document.getElementById('tableBody');
             tbody.innerHTML = "";
-            let total = 0, count = 0;
-            
-            const dataBelanja = data.filter(d => d.tipe === 'Keluar' && d.nama);
-
-            dataBelanja.forEach(d => {
-                let nominal = parseInt(String(d.harga).replace(/[^0-9]/g, '')) || 0;
-                if(nominal > 0) {
-                    count++;
-                    total += nominal;
-                    // Format Jam agar HH.mm (Tanpa Detik)
-                    let jamBersih = d.jam.split('.').slice(0,2).join('.');
-                    tbody.innerHTML += `<tr>
-                        <td>${d.hari || '-'}</td>
-                        <td>${d.tanggal || '-'}</td>
-                        <td>${jamBersih || '-'}</td>
-                        <td>${d.nama}</td>
-                        <td>Rp ${nominal.toLocaleString('id-ID')}</td>
-                    </tr>`;
-                }
+            let tot = 0, qty = 0;
+            data.filter(d => d.tipe === 'Keluar' && d.nama).forEach(d => {
+                let nom = parseInt(String(d.harga).replace(/[^0-9]/g, '')) || 0;
+                qty++; tot += nom;
+                let jamBersih = d.jam.split('.').slice(0,2).join('.');
+                tbody.innerHTML += `<tr><td>${d.hari}</td><td>${d.tanggal}</td><td>${jamBersih}</td><td>${d.nama}</td><td>Rp ${nom.toLocaleString('id-ID')}</td></tr>`;
             });
-
-            document.getElementById('totalQty').innerText = "Jumlah: " + count + " Item";
-            document.getElementById('totalNominal').innerText = "Total: Rp " + total.toLocaleString('id-ID');
+            document.getElementById('totalQty').innerText = "Jumlah: " + qty + " Item";
+            document.getElementById('totalNominal').innerText = "Total: Rp " + tot.toLocaleString('id-ID');
         }
 
         function showChart(o, b) {
@@ -189,42 +186,22 @@
             if(myChart) myChart.destroy();
             myChart = new Chart(ctx, {
                 type: 'bar',
-                data: {
-                    labels: ['Masuk', 'Keluar'],
-                    datasets: [{
-                        data: [o, b],
-                        backgroundColor: ['#1abc9c', '#e74c3c'],
-                        borderRadius: 10
-                    }]
-                },
-                options: { 
-                    maintainAspectRatio: false,
-                    plugins: {
-                        legend: { display: false } // MENGHILANGKAN TULISAN UNDEFINED
-                    },
-                    scales: {
-                        y: { beginAtZero: true }
-                    }
-                }
+                data: { labels: ['Masuk', 'Keluar'], datasets: [{ data: [o, b], backgroundColor: ['#1abc9c', '#e74c3c'], borderRadius: 10 }] },
+                options: { maintainAspectRatio: false, plugins: { legend: { display: false } } }
             });
         }
 
         async function simpanBelanja() {
             const n = document.getElementById('nama').value;
             const h = document.getElementById('harga').value;
-            if(!n || !h) return alert("Isi Data!");
+            if(!n || !h) return alert("Isi data!");
             const btn = document.getElementById('btnSimpan');
-            btn.innerText = "KIRIM..."; btn.disabled = true;
+            btn.innerText = "PROSES..."; btn.disabled = true;
             try {
-                await fetch(SCRIPT_URL, { 
-                    method: 'POST', 
-                    mode: 'no-cors', 
-                    body: JSON.stringify({ nama: n, harga: parseInt(h), tipe: 'Keluar' }) 
-                });
-                alert("Berhasil!"); location.reload();
+                await fetch(SCRIPT_URL, { method: 'POST', mode: 'no-cors', body: JSON.stringify({ nama: n, harga: parseInt(h), tipe: 'Keluar' }) });
+                location.reload();
             } catch (e) { alert("Gagal!"); btn.disabled = false; }
         }
-
         fetchData();
     </script>
 </body>
