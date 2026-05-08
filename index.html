@@ -28,6 +28,7 @@
         table { width: 100%; border-collapse: collapse; margin-top: 15px; min-width: 600px; }
         th { background: #f8f9fa; text-align: left; padding: 12px; border-bottom: 2px solid #eee; }
         td { padding: 12px; border-bottom: 1px solid #eee; }
+        .summary-row { background: #fff3e0; font-weight: bold; }
         
         .ai-card { background: #ffffff; padding: 20px; border-radius: 12px; border-left: 5px solid #6c5ce7; margin-top: 20px; box-shadow: 0 4px 6px rgba(0,0,0,0.05); }
         .ai-text { background: #f9f9ff; padding: 15px; border-radius: 8px; font-size: 0.9rem; color: #2d3436; line-height: 1.6; white-space: pre-line; border: 1px dashed #6c5ce7; margin-top: 10px; }
@@ -79,6 +80,12 @@
                     <table>
                         <thead><tr><th>Hari</th><th>Tanggal</th><th>Jam</th><th>Nama Barang</th><th>Nominal</th></tr></thead>
                         <tbody id="tableBody"></tbody>
+                        <tfoot>
+                            <tr class="summary-row">
+                                <td colspan="3" id="totalQty" style="text-align:right">Jumlah: 0 Item</td>
+                                <td colspan="2" id="totalNominal">Total: Rp 0</td>
+                            </tr>
+                        </tfoot>
                     </table>
                 </div>
             </div>
@@ -130,7 +137,6 @@
                     if(d.nama) produkPalingLaku[d.nama] = (produkPalingLaku[d.nama] || 0) + 1;
                 } else {
                     totalB += n;
-                    // Logika pencarian nominal terbesar
                     if(n > belanjaTermahal.harga) {
                         belanjaTermahal.nama = d.nama;
                         belanjaTermahal.harga = n;
@@ -161,11 +167,18 @@
         function renderTable(data) {
             const tbody = document.getElementById('tableBody');
             tbody.innerHTML = "";
+            let totalBiaya = 0, qtyItem = 0;
+            
             data.filter(d => d.tipe === 'Keluar' && d.nama).forEach(d => {
                 let nom = parseInt(String(d.harga).replace(/[^0-9]/g, '')) || 0;
+                totalBiaya += nom;
+                qtyItem++;
                 let jamBersih = d.jam.split('.').slice(0,2).join('.');
                 tbody.innerHTML += `<tr><td>${d.hari}</td><td>${d.tanggal}</td><td>${jamBersih}</td><td>${d.nama}</td><td>Rp ${nom.toLocaleString('id-ID')}</td></tr>`;
             });
+            
+            document.getElementById('totalQty').innerText = "Jumlah: " + qtyItem + " Item";
+            document.getElementById('totalNominal').innerText = "Total: Rp " + totalBiaya.toLocaleString('id-ID');
         }
 
         function showChart(o, b) {
