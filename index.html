@@ -120,7 +120,8 @@
 
         function generateAI(data) {
             let produkPalingLaku = {};
-            let totalO = 0, totalB = 0, listKeluar = [];
+            let totalO = 0, totalB = 0;
+            let belanjaTermahal = { nama: 'bahan baku', harga: 0 };
 
             data.forEach(d => {
                 let n = parseInt(String(d.harga).replace(/[^0-9]/g, '')) || 0;
@@ -129,7 +130,11 @@
                     if(d.nama) produkPalingLaku[d.nama] = (produkPalingLaku[d.nama] || 0) + 1;
                 } else {
                     totalB += n;
-                    if(d.nama) listKeluar.push(d.nama);
+                    // Logika pencarian nominal terbesar
+                    if(n > belanjaTermahal.harga) {
+                        belanjaTermahal.nama = d.nama;
+                        belanjaTermahal.harga = n;
+                    }
                 }
             });
 
@@ -147,7 +152,7 @@
 - *Produk Kurang Laku:* ${kurangLaku}
 - *Rata-rata Omzet/Hari:* Rp ${avgOmzet.toLocaleString('id-ID')}
 - *Prediksi Omzet Minggu Depan:* Rp ${(avgOmzet * 7).toLocaleString('id-ID')}
-- *Fokus Biaya:* Pastikan stok ${listKeluar[0] || 'bahan baku'} selalu terkontrol.
+- *Fokus Biaya:* Pastikan stok ${belanjaTermahal.nama} selalu terkontrol karena biaya paling tinggi.
 - *Status Keuangan:* ${profitTotal > 0 ? 'Surplus (Aman)' : 'Defisit (Perlu Evaluasi)'}`;
 
             document.getElementById('aiAnalysisText').innerText = hasilAnalisa;
