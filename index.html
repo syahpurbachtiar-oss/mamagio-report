@@ -9,107 +9,181 @@
     <style>
         :root { --sidebar: #1a2a47; --primary: #ff9800; --bg: #f0f2f5; }
         body { margin: 0; display: flex; background: var(--bg); font-family: 'Segoe UI', sans-serif; min-height: 100vh; }
+        
+        /* Sidebar */
         .sidebar { width: 220px; background: var(--sidebar); color: white; flex-shrink: 0; padding: 20px 0; }
         .sidebar h2 { color: var(--primary); text-align: center; font-size: 1.1rem; margin-bottom: 30px; }
-        .nav-item { padding: 15px 25px; color: #adb5bd; display: flex; align-items: center; cursor: pointer; }
+        .nav-item { padding: 15px 25px; color: #adb5bd; display: flex; align-items: center; cursor: pointer; transition: 0.3s; }
+        .nav-item:hover { background: #2c3e50; color: white; }
         .nav-item.active { background: #2c3e50; color: var(--primary); border-left: 4px solid var(--primary); }
-        .main { flex-grow: 1; padding: 20px; }
+        
+        /* Main Content */
+        .main { flex-grow: 1; padding: 20px; overflow-y: auto; }
+        .page-content { display: none; }
+        .page-content.active { display: block; }
+
+        /* Stats & Cards */
         .stats-grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(150px, 1fr)); gap: 15px; margin-bottom: 20px; }
         .stat-card { background: white; padding: 20px; border-radius: 12px; box-shadow: 0 4px 6px rgba(0,0,0,0.05); text-align: center; }
         .stat-card p { margin: 10px 0 0; font-size: 1.4rem; font-weight: bold; }
+        
+        /* Input Form */
         .input-box { background: white; padding: 20px; border-radius: 12px; margin-bottom: 20px; border-top: 4px solid var(--primary); }
         .input-row { display: flex; gap: 10px; margin-top: 15px; }
-        input { flex: 1; padding: 12px; border: 1px solid #ddd; border-radius: 8px; }
+        input { flex: 1; padding: 12px; border: 1px solid #ddd; border-radius: 8px; outline: none; }
         .btn-save { background: #e74c3c; color: white; border: none; padding: 10px 20px; border-radius: 8px; font-weight: bold; cursor: pointer; }
-        .charts-grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(300px, 1fr)); gap: 15px; margin-bottom: 20px; }
-        .chart-card { background: white; padding: 15px; border-radius: 12px; min-height: 280px; }
-        .ai-chat { background: #1a2a47; color: white; padding: 20px; border-radius: 15px; display: flex; align-items: center; gap: 15px; }
-        .ai-chat i { font-size: 2rem; color: var(--primary); }
-        @media (max-width: 768px) { body { flex-direction: column; } .sidebar { width: 100%; display: flex; justify-content: space-around; } .sidebar h2 { display: none; } .input-row { flex-direction: column; } }
+
+        /* Table */
+        .table-card { background: white; padding: 20px; border-radius: 12px; box-shadow: 0 4px 6px rgba(0,0,0,0.05); }
+        table { width: 100%; border-collapse: collapse; margin-top: 15px; }
+        th { background: #f8f9fa; text-align: left; padding: 12px; border-bottom: 2px solid #eee; }
+        td { padding: 12px; border-bottom: 1px solid #eee; }
+        .summary-row { background: #fff3e0; font-weight: bold; }
+
+        .ai-chat { background: #1a2a47; color: white; padding: 15px; border-radius: 12px; display: flex; align-items: center; gap: 15px; margin-top: 20px; }
     </style>
 </head>
 <body>
     <div class="sidebar">
         <h2>MAMA GIO ADMIN</h2>
-        <div class="nav-item active"><i class="fas fa-th-large"></i> Dashboard</div>
-        <div class="nav-item"><i class="fas fa-money-bill"></i> Pemasukan</div>
-        <div class="nav-item"><i class="fas fa-shopping-cart"></i> Pengeluaran</div>
+        <div class="nav-item active" onclick="switchPage('dashboard', this)"><i class="fas fa-th-large"></i> &nbsp; Dashboard</div>
+        <div class="nav-item" onclick="switchPage('pengeluaran', this)"><i class="fas fa-shopping-cart"></i> &nbsp; Pengeluaran</div>
     </div>
-    <div class="main">
-        <div class="stats-grid">
-            <div class="stat-card"><h3>Omzet</h3><p id="txtOmzet" style="color:#1abc9c">Rp 0</p></div>
-            <div class="stat-card"><h3>Biaya</h3><p id="txtBiaya" style="color:#e74c3c">Rp 0</p></div>
-            <div class="stat-card"><h3>Profit</h3><p id="txtProfit" style="color:#3498db">Rp 0</p></div>
-        </div>
-        <div class="input-box">
-            <b><i class="fas fa-plus-circle"></i> Catat Belanja Baru</b>
-            <div class="input-row">
-                <input type="text" id="nama" placeholder="Barang...">
-                <input type="number" id="harga" placeholder="Harga Rp">
-                <button class="btn-save" id="btnSimpan" onclick="simpanBelanja()">SIMPAN DATA</button>
-            </div>
-        </div>
-        <div class="charts-grid">
-            <div class="chart-card"><canvas id="lineChart"></canvas></div>
-            <div class="chart-card"><canvas id="pieChart"></canvas></div>
-        </div>
-        <div class="ai-chat">
-            <i class="fas fa-robot"></i>
-            <div class="ai-content">
-                <b style="color:var(--primary)">Analis AI Mama Gio:</b><br>
-                <span id="aiMsg">Menganalisa data keuangan...</span>
-            </div>
-        </div>
-    </div>
-    <script>
-        // MASUKKAN LINK GOOGLE SCRIPT KAMU DI SINI
-        const SCRIPT_URL = 'GANTI_PAKAI_LINK_WEB_APP_KAMU';
 
-        let chartL, chartP;
+    <div class="main">
+        <div id="dashboard" class="page-content active">
+            <div class="stats-grid">
+                <div class="stat-card"><h3>Omzet</h3><p id="txtOmzet" style="color:#1abc9c">Rp 0</p></div>
+                <div class="stat-card"><h3>Biaya</h3><p id="txtBiaya" style="color:#e74c3c">Rp 0</p></div>
+                <div class="stat-card"><h3>Profit</h3><p id="txtProfit" style="color:#3498db">Rp 0</p></div>
+            </div>
+            <div class="input-box">
+                <b><i class="fas fa-plus-circle"></i> Catat Belanja Baru (ke Sheet 2)</b>
+                <div class="input-row">
+                    <input type="text" id="nama" placeholder="Barang...">
+                    <input type="number" id="harga" placeholder="Harga Rp">
+                    <button class="btn-save" id="btnSimpan" onclick="simpanBelanja()">SIMPAN DATA</button>
+                </div>
+            </div>
+            <div style="background:white; padding:20px; border-radius:12px;"><canvas id="chartLine"></canvas></div>
+        </div>
+
+        <div id="pengeluaran" class="page-content">
+            <div class="table-card">
+                <h2><i class="fas fa-history"></i> Riwayat Pengeluaran (Sheet 2)</h2>
+                <table>
+                    <thead>
+                        <tr>
+                            <th>Hari</th>
+                            <th>Tanggal</th>
+                            <th>Jam</th>
+                            <th>Pengeluaran</th>
+                            <th>Nominal</th>
+                        </tr>
+                    </thead>
+                    <tbody id="tableBody"></tbody>
+                    <tfoot>
+                        <tr class="summary-row">
+                            <td colspan="3" id="totalQty" style="text-align:right">Jumlah: 0 Item</td>
+                            <td colspan="2" id="totalNominal">Total: Rp 0</td>
+                        </tr>
+                    </tfoot>
+                </table>
+            </div>
+        </div>
+
+        <div class="ai-chat">
+            <i class="fas fa-robot" style="font-size: 2rem; color: var(--primary);"></i>
+            <div>
+                <b style="color:var(--primary)">Analis AI Mama Gio:</b><br>
+                <span id="aiMsg">Mengsinkronkan data Sheet1 & Sheet2...</span>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        // Link Apps Script yang baru kamu kasih
+        const SCRIPT_URL = 'https://script.google.com/macros/s/AKfycbxew8CfGQ4s5-O6ekFfKjVKkIx2tICC-RctxnlOhrBMX07G4Wfz-97q_exyFbDIGEiL/exec';
+
+        let myChart;
+
+        function switchPage(pageId, element) {
+            document.querySelectorAll('.page-content').forEach(p => p.classList.remove('active'));
+            document.querySelectorAll('.nav-item').forEach(n => n.classList.remove('active'));
+            document.getElementById(pageId).classList.add('active');
+            element.classList.add('active');
+        }
+
         async function fetchData() {
             try {
                 const res = await fetch(SCRIPT_URL);
                 const data = await res.json();
                 updateUI(data);
-            } catch (e) { console.log("Data belum tersambung"); }
+                renderTable(data);
+            } catch (e) { document.getElementById('aiMsg').innerText = "Gagal memuat database."; }
         }
+
         function updateUI(data) {
-            let tOmzet = 0, tBiaya = 0;
+            let omzet = 0, biaya = 0;
             data.forEach(d => {
-                if(d.tipe === 'Masuk') tOmzet += d.harga;
-                else tBiaya += d.harga;
+                let v = parseInt(d.harga) || 0;
+                if(d.tipe === 'Masuk') omzet += v;
+                else biaya += v;
             });
-            document.getElementById('txtOmzet').innerText = "Rp " + tOmzet.toLocaleString();
-            document.getElementById('txtBiaya').innerText = "Rp " + tBiaya.toLocaleString();
-            const profit = tOmzet - tBiaya;
-            document.getElementById('txtProfit').innerText = "Rp " + profit.toLocaleString();
-            document.getElementById('aiMsg').innerText = profit >= 0 ? "Bagus! Bisnis untung. Terus pantau stok barang." : "Waduh rugi! Cek lagi pengeluaran harianmu.";
-            renderCharts(data, tOmzet, tBiaya);
+            document.getElementById('txtOmzet').innerText = "Rp " + omzet.toLocaleString();
+            document.getElementById('txtBiaya').innerText = "Rp " + biaya.toLocaleString();
+            document.getElementById('txtProfit').innerText = "Rp " + (omzet - biaya).toLocaleString();
+            renderChart(omzet, biaya);
         }
-        function renderCharts(data, omzet, biaya) {
-            if(chartL) chartL.destroy();
-            if(chartP) chartP.destroy();
-            chartL = new Chart(document.getElementById('lineChart'), {
-                type: 'line',
+
+        function renderTable(data) {
+            const tbody = document.getElementById('tableBody');
+            tbody.innerHTML = "";
+            let total = 0, count = 0;
+            data.filter(d => d.tipe === 'Keluar').forEach(d => {
+                count++;
+                total += parseInt(d.harga) || 0;
+                tbody.innerHTML += `<tr>
+                    <td>${d.hari || '-'}</td>
+                    <td>${d.tanggal || '-'}</td>
+                    <td>${d.jam || '-'}</td>
+                    <td>${d.nama}</td>
+                    <td>Rp ${parseInt(d.harga).toLocaleString()}</td>
+                </tr>`;
+            });
+            document.getElementById('totalQty').innerText = "Jumlah: " + count + " Item";
+            document.getElementById('totalNominal').innerText = "Total: Rp " + total.toLocaleString();
+        }
+
+        function renderChart(o, b) {
+            const ctx = document.getElementById('chartLine').getContext('2d');
+            if(myChart) myChart.destroy();
+            myChart = new Chart(ctx, {
+                type: 'bar',
                 data: {
-                    labels: ['Sen', 'Sel', 'Rab', 'Kam', 'Jum', 'Sab', 'Min'],
-                    datasets: [{ label: 'Omzet', data: [150, 230, 180, 310, 280, 420, 500], borderColor: '#1abc9c', tension: 0.3 }]
+                    labels: ['Masuk (Sheet1)', 'Keluar (Sheet2)'],
+                    datasets: [{ data: [o, b], backgroundColor: ['#1abc9c', '#e74c3c'] }]
                 }
             });
-            chartP = new Chart(document.getElementById('pieChart'), {
-                type: 'doughnut',
-                data: { labels: ['Omzet', 'Biaya'], datasets: [{ data: [omzet || 1, biaya || 1], backgroundColor: ['#3498db', '#e74c3c'] }] }
-            });
         }
+
         async function simpanBelanja() {
             const n = document.getElementById('nama').value;
             const h = document.getElementById('harga').value;
-            if(!n || !h) return alert("Isi dulu!");
-            document.getElementById('btnSimpan').innerText = "KIRIM...";
+            if(!n || !h) return alert("Lengkapi data!");
+            const btn = document.getElementById('btnSimpan');
+            btn.innerText = "KIRIM...";
+            btn.disabled = true;
+
             try {
-                await fetch(SCRIPT_URL, { method: 'POST', mode: 'no-cors', body: JSON.stringify({ nama: n, harga: parseInt(h), tipe: 'Keluar' }) });
-                alert("Berhasil!"); location.reload();
-            } catch (e) { alert("Gagal kirim!"); }
+                await fetch(SCRIPT_URL, { 
+                    method: 'POST', 
+                    mode: 'no-cors', 
+                    body: JSON.stringify({ nama: n, harga: parseInt(h), tipe: 'Keluar' }) 
+                });
+                alert("Tercatat ke Sheet 2!");
+                location.reload();
+            } catch (e) { alert("Gagal!"); btn.disabled = false; }
         }
         fetchData();
     </script>
