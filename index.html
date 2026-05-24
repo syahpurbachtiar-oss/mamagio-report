@@ -118,12 +118,13 @@
     </div>
 
     <script>
-        // LINK BARU SUDAH TERPASANG DIREK DI SINI BOSQUE
+        // URL BARU DARI GOOGLE APPS SCRIPT KAMU SUDAH SAYA PASANG DI SINI
         const SCRIPT_URL = 'https://script.google.com/macros/s/AKfycbzdg_8Wp4EuWGgNoBuUyEWA3onURiKGe8iuhhgzU_QFPFHRnz9q_DdnFSCKd0zwaZ2Q/exec';
         let myChart;
         let dataTransaksiLengkap = [];
         let voiceRecognitionEngine;
         
+        // API KEY CADANGAN JIKA TERJADI ERROR IZIN URLFETCH DI GOOGLE BACKEND
         const GEMINI_API_KEY = "AIzaSyDqY9z1xXCVzqInv_LCt6Ip7tptymwvdgg";
 
         function switchPage(pageId, element) {
@@ -143,7 +144,7 @@
                 generateAI(data);
             } catch (e) { 
                 console.error(e);
-                document.getElementById('aiAnalysisText').innerText = "Gagal memuat data. Pastikan status jembatan Web App aktif.";
+                document.getElementById('aiAnalysisText').innerText = "Gagal memuat data. Mohon refresh halaman kembali.";
             }
         }
 
@@ -199,7 +200,11 @@
                 let nom = parseInt(String(d.harga).replace(/[^0-9]/g, '')) || 0;
                 totalBiaya += nom;
                 qtyItem++;
-                let jamBersih = d.jam ? d.jam.split('.').slice(0,2).join('.') : '--.--';
+                
+                // Perbaikan Proteksi Crash: Memastikan string jam aman di-split meskipun datanya kosong
+                let jamMentah = d.jam ? String(d.jam) : '';
+                let jamBersih = jamMentah.includes('.') ? jamMentah.split('.').slice(0,2).join('.') : (jamMentah || '--.--');
+                
                 tbody.innerHTML += `<tr><td>${d.hari || '-'}</td><td>${d.tanggal || '-'}</td><td>${jamBersih}</td><td>${d.nama}</td><td>Rp ${nom.toLocaleString('id-ID')}</td></tr>`;
             });
             
@@ -243,7 +248,7 @@
 
             try {
                 const dataRingkas = dataTransaksiLengkap.slice(-300);
-                const promptSakti = "Kamu adalah Asisten Keuangan Warung Mama Gio yang sangat cerdas, detail, dan gaul. Tahun saat ini adalah 2026. Berikut adalah Data Transaksi Terupdate saat ini (format JSON): " + JSON.stringify(dataRingkas) + "\n Jawablah pertanyaan user berikut berdasarkan data tersebut secara akurat. Gunakan gaya bahasa santai, akrab, penuh energi, dan selalu panggil user dengan sebutan 'Bosque': " + userQuery;
+                const promptSakti = "Kamu adalah Asisten Keuangan Warung Mama Gio yang cerdas, detail, dan gaul. Tahun saat ini adalah 2026. Berikut adalah Data Transaksi Terupdate saat ini (format JSON): " + JSON.stringify(dataRingkas) + "\n Jawablah pertanyaan user berikut berdasarkan data tersebut secara akurat. Gunakan gaya bahasa santai, akrab, penuh energi, dan selalu panggil user dengan sebutan 'Bosque': " + userQuery;
 
                 const response = await fetch(`https://generativelanguage.googleapis.com/v1beta/models/gemini-1.5-flash:generateContent?key=${GEMINI_API_KEY}`, {
                     method: 'POST',
