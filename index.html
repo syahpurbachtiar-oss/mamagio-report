@@ -119,7 +119,7 @@
 
     <script>
         const SCRIPT_URL = 'https://script.google.com/macros/s/AKfycbwNIIVGQuk5ZVPkIWviMkzyGzx5H_go1y7-9YaDzFNwbBi9Ds7mAUN_hxOby0SBRMYB/exec';
-        // API KEY MILIKMU SUDAH TERPASANG DAN AKTIF 100% DI BAWAH INI
+        // API KEY KAMU SUDAH AKURAT TERPASANG DI SINI
         const GEMINI_API_KEY = 'AIzaSyDqY9z1xXCVzqInv_LCt6Ip7tptymwvdgg'; 
         
         let myChart;
@@ -194,7 +194,7 @@
             document.getElementById('aiAnalysisText').innerText = hasilAnalisa;
         }
 
-        /* SISTEM OPERASI CHAT & VOICE INTERAKTIF */
+        /* CHAT & VOICE ENGINE */
         async function sendChat() {
             const inputEl = document.getElementById('chatInput');
             const query = inputEl.value.trim();
@@ -204,7 +204,7 @@
             inputEl.value = "";
 
             if(GEMINI_API_KEY === 'MASUKKAN_API_KEY_GEMINI_DISINI' || !GEMINI_API_KEY) {
-                appendMessage("Maaf Bosque, Fitur Chat belum diaktifkan karena API Key Gemini belum dimasukkan.", 'bot');
+                appendMessage("Maaf Bosque, Fitur Chat belum aktif karena API Key Gemini belum benar.", 'bot');
                 return;
             }
 
@@ -274,3 +274,24 @@ Pertanyaan: ${query}`;
             if(recognition && micBtn.classList.contains('recording')) {
                 recognition.stop();
                 return;
+            }
+
+            const SpeechGen = window.SpeechRecognition || window.webkitSpeechRecognition;
+            recognition = new SpeechGen();
+            recognition.lang = 'id-ID';
+            recognition.interimResults = false;
+
+            recognition.onstart = () => { micBtn.classList.add('recording'); };
+            recognition.onend = () => { micBtn.classList.remove('recording'); };
+            recognition.onerror = () => { micBtn.classList.remove('recording'); };
+            
+            recognition.onresult = (event) => {
+                const speechResult = event.results[0][0].transcript;
+                document.getElementById('chatInput').value = speechResult;
+                sendChat();
+            };
+
+            recognition.start();
+        }
+
+        function renderTable(data) {
