@@ -93,7 +93,7 @@
     </div>
 
     <script>
-        const SCRIPT_URL = 'https://script.google.com/macros/s/AKfycbypNxcuKXEte1Son643s4iQdgRtPkvbqnIPDc5rZIBbJpD3-rja8GlwwSQPDdD4CnGP/exec';
+        const SCRIPT_URL = 'https://script.google.com/macros/s/AKfycbzdg_8Wp4EuWGgNoBuUyEWA3onURiKGe8iuhhgzU_QFPFHRnz9q_DdnFSCKd0zwaZ2Q/exec';
         let myChart;
 
         function switchPage(pageId, element) {
@@ -143,14 +143,13 @@
             let unggulan = sorted.length > 0 ? sorted[0][0] : "-";
             let kurangLaku = sorted.length > 1 ? sorted[sorted.length-1][0] : "-";
             
-            // Logika Otomatis Menghitung Jumlah Hari Berdasarkan Data Riwayat
             const daftarTanggal = [...new Set(data.map(d => d.tanggal))];
             const jumlahHari = daftarTanggal.length > 0 ? daftarTanggal.length : 1;
 
             let profitTotal = totalO - totalB;
             let avgProfit = Math.round(profitTotal / jumlahHari);
             let avgOmzet = Math.round(totalO / jumlahHari);
-            let avgBiaya = Math.round(totalB / jumlahHari); // Hitungan rata-rata biaya operasional harian
+            let avgBiaya = Math.round(totalB / jumlahHari);
 
             let hasilAnalisa = `📊 *HASIL ANALISA AI MAMA GIO*
 - *Rata-rata Omzet/Hari:* Rp ${avgOmzet.toLocaleString('id-ID')}
