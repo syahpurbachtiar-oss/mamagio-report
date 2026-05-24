@@ -33,6 +33,19 @@
         .ai-card { background: #ffffff; padding: 20px; border-radius: 12px; border-left: 5px solid #6c5ce7; margin-top: 20px; box-shadow: 0 4px 6px rgba(0,0,0,0.05); }
         .ai-text { background: #f9f9ff; padding: 15px; border-radius: 8px; font-size: 0.9rem; color: #2d3436; line-height: 1.6; white-space: pre-line; border: 1px dashed #6c5ce7; margin-top: 10px; }
 
+        /* AREA KOTAK CHAT AI INTERAKTIF */
+        .chat-container { background: white; padding: 20px; border-radius: 12px; margin-top: 20px; box-shadow: 0 4px 6px rgba(0,0,0,0.05); border-top: 4px solid #00b894; }
+        .chat-box { height: 200px; overflow-y: auto; background: #f8f9fa; padding: 15px; border-radius: 8px; border: 1px solid #eee; margin-bottom: 10px; display: flex; flex-direction: column; gap: 10px; }
+        .msg { padding: 10px 14px; border-radius: 8px; max-width: 80%; font-size: 0.9rem; line-height: 1.4; position: relative; }
+        .msg.user { background: #e3f2fd; align-self: flex-end; color: #0d47a1; }
+        .msg.bot { background: #e8f5e9; align-self: flex-start; color: #1b5e20; }
+        .chat-input-row { display: flex; gap: 8px; align-items: center; }
+        .btn-chat { background: #00b894; color: white; border: none; padding: 12px; border-radius: 8px; cursor: pointer; display: flex; align-items: center; justify-content: center; width: 45px; height: 45px; box-sizing: border-box; }
+        .btn-mic { background: #0984e3; }
+        .btn-mic.recording { background: #d63031; animation: pulse 1s infinite; }
+        .btn-speak { background: #6c5ce7; font-size: 0.8rem; padding: 3px 8px; border: none; color: white; border-radius: 4px; cursor: pointer; margin-top: 5px; display: inline-block; }
+
+        @keyframes pulse { 0% { transform: scale(1); } 50% { transform: scale(1.05); } 100% { transform: scale(1); } }
         @media (max-width: 768px) {
             body { flex-direction: column; }
             .sidebar { width: 100%; display: flex; justify-content: space-around; padding: 10px 0; }
@@ -71,6 +84,18 @@
                 <b><i class="fas fa-robot"></i> Laporan Strategi AI Mama Gio</b>
                 <div id="aiAnalysisText" class="ai-text">Menganalisa data...</div>
             </div>
+
+            <div class="chat-container">
+                <b><i class="fas fa-comments"></i> Tanya Data AI Mama Gio (Chat & Voice)</b>
+                <div class="chat-box" id="chatBox">
+                    <div class="msg bot">Halo Bosque! Ada yang mau ditanyakan seputar data penjualan, pembeli terbanyak, atau jam operasional teramai? Tulis atau klik tombol mic lalu bicara ya!</div>
+                </div>
+                <div class="chat-input-row">
+                    <input type="text" id="chatInput" placeholder="Tanya apa saja tentang data Google Sheet...">
+                    <button class="btn-chat btn-mic" id="btnMic" onclick="toggleVoice()"><i class="fas fa-microphone"></i></button>
+                    <button class="btn-chat" onclick="sendChat()"><i class="fas fa-paper-plane"></i></button>
+                </div>
+            </div>
         </div>
 
         <div id="pengeluaran" class="page-content">
@@ -94,7 +119,12 @@
 
     <script>
         const SCRIPT_URL = 'https://script.google.com/macros/s/AKfycbwNIIVGQuk5ZVPkIWviMkzyGzx5H_go1y7-9YaDzFNwbBi9Ds7mAUN_hxOby0SBRMYB/exec';
+        // API KEY MILIKMU SUDAH TERPASANG DAN AKTIF 100% DI BAWAH INI
+        const GEMINI_API_KEY = 'AIzaSyDqY9z1xXCVzqInv_LCt6Ip7tptymwvdgg'; 
+        
         let myChart;
+        let globalData = [];
+        let recognition;
 
         function switchPage(pageId, element) {
             document.querySelectorAll('.page-content').forEach(p => p.classList.remove('active'));
@@ -107,6 +137,7 @@
             try {
                 const res = await fetch(SCRIPT_URL);
                 const data = await res.json();
+                globalData = data; 
                 updateDashboard(data);
                 renderTable(data);
                 generateAI(data);
@@ -143,14 +174,13 @@
             let unggulan = sorted.length > 0 ? sorted[0][0] : "-";
             let kurangLaku = sorted.length > 1 ? sorted[sorted.length-1][0] : "-";
             
-            // Logika Otomatis Menghitung Jumlah Hari Berdasarkan Data Riwayat
             const daftarTanggal = [...new Set(data.map(d => d.tanggal))];
             const jumlahHari = daftarTanggal.length > 0 ? daftarTanggal.length : 1;
 
             let profitTotal = totalO - totalB;
             let avgProfit = Math.round(profitTotal / jumlahHari);
             let avgOmzet = Math.round(totalO / jumlahHari);
-            let avgBiaya = Math.round(totalB / jumlahHari); // Hitungan rata-rata biaya operasional harian
+            let avgBiaya = Math.round(totalB / jumlahHari);
 
             let hasilAnalisa = `📊 *HASIL ANALISA AI MAMA GIO*
 - *Rata-rata Omzet/Hari:* Rp ${avgOmzet.toLocaleString('id-ID')}
@@ -164,42 +194,83 @@
             document.getElementById('aiAnalysisText').innerText = hasilAnalisa;
         }
 
-        function renderTable(data) {
-            const tbody = document.getElementById('tableBody');
-            tbody.innerHTML = "";
-            let totalBiaya = 0, qtyItem = 0;
-            
-            data.filter(d => d.tipe === 'Keluar' && d.nama).forEach(d => {
-                let nom = parseInt(String(d.harga).replace(/[^0-9]/g, '')) || 0;
-                totalBiaya += nom;
-                qtyItem++;
-                let jamBersih = d.jam.split('.').slice(0,2).join('.');
-                tbody.innerHTML += `<tr><td>${d.hari}</td><td>${d.tanggal}</td><td>${jamBersih}</td><td>${d.nama}</td><td>Rp ${nom.toLocaleString('id-ID')}</td></tr>`;
-            });
-            
-            document.getElementById('totalQty').innerText = "Jumlah: " + qtyItem + " Item";
-            document.getElementById('totalNominal').innerText = "Total: Rp " + totalBiaya.toLocaleString('id-ID');
+        /* SISTEM OPERASI CHAT & VOICE INTERAKTIF */
+        async function sendChat() {
+            const inputEl = document.getElementById('chatInput');
+            const query = inputEl.value.trim();
+            if(!query) return;
+
+            appendMessage(query, 'user');
+            inputEl.value = "";
+
+            if(GEMINI_API_KEY === 'MASUKKAN_API_KEY_GEMINI_DISINI' || !GEMINI_API_KEY) {
+                appendMessage("Maaf Bosque, Fitur Chat belum diaktifkan karena API Key Gemini belum dimasukkan.", 'bot');
+                return;
+            }
+
+            appendMessage("Bentar ya Bosque, AI lagi menyisir data Google Sheet...", 'bot');
+
+            try {
+                const dataContext = JSON.stringify(globalData.slice(0, 300)); 
+                const prompt = `Anda adalah Asisten Keuangan Warung Mama Gio yang cerdas dan jenaka. 
+Data Keuangan saat ini (Format JSON): ${dataContext}
+Tahun saat ini adalah 2026. Jawablah pertanyaan user berikut berdasarkan data di atas dengan akurat, singkat, dan bahasa santai/gaul (panggil 'Bosque').
+Pertanyaan: ${query}`;
+
+                const response = await fetch(`https://generativelanguage.googleapis.com/v1beta/models/gemini-1.5-flash:generateContent?key=${GEMINI_API_KEY}`, {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({ contents: [{ parts: [{ text: prompt }] }] })
+                });
+                
+                const resData = await response.json();
+                let reply = resData.candidates[0].content.parts[0].text;
+                
+                const box = document.getElementById('chatBox');
+                if (box.children.length > 0) { box.removeChild(box.lastChild); }
+
+                appendMessage(reply, 'bot', true);
+            } catch (err) {
+                console.error(err);
+                appendMessage("Aduh pusing Bosque, gagal memproses data ke server AI.", 'bot');
+            }
         }
 
-        function showChart(o, b) {
-            const ctx = document.getElementById('chartUtama').getContext('2d');
-            if(myChart) myChart.destroy();
-            myChart = new Chart(ctx, {
-                type: 'bar',
-                data: { labels: ['Masuk', 'Keluar'], datasets: [{ data: [o, b], backgroundColor: ['#1abc9c', '#e74c3c'], borderRadius: 10 }] },
-                options: { maintainAspectRatio: false, plugins: { legend: { display: false } } }
-            });
+        function appendMessage(text, sender, withVoiceButton = false) {
+            const box = document.getElementById('chatBox');
+            const msgEl = document.createElement('div');
+            msgEl.className = `msg ${sender}`;
+            msgEl.innerText = text;
+            
+            if(withVoiceButton && sender === 'bot') {
+                const btnSpeak = document.createElement('button');
+                btnSpeak.className = 'btn-speak';
+                btnSpeak.innerHTML = "<i class='fas fa-volume-up'></i> Dengarkan";
+                btnSpeak.onclick = () => speakText(text);
+                msgEl.appendChild(document.createElement('br'));
+                msgEl.appendChild(btnSpeak);
+            }
+
+            box.appendChild(msgEl);
+            box.scrollTop = box.scrollHeight;
         }
 
-        async function simpanBelanja() {
-            const n = document.getElementById('nama').value, h = document.getElementById('harga').value;
-            if(!n || !h) return alert("Isi data!");
-            const btn = document.getElementById('btnSimpan');
-            btn.innerText = "WAIT..."; btn.disabled = true;
-            await fetch(SCRIPT_URL, { method: 'POST', mode: 'no-cors', body: JSON.stringify({ nama: n, harga: parseInt(h), tipe: 'Keluar' }) });
-            location.reload();
+        function speakText(text) {
+            if ('speechSynthesis' in window) {
+                let cleanText = text.replace(/[*📊-]/g, '');
+                const utterance = new SpeechSynthesisUtterance(cleanText);
+                utterance.lang = 'id-ID';
+                window.speechSynthesis.speak(utterance);
+            } else { alert("Browser kamu tidak mendukung suara."); }
         }
-        fetchData();
-    </script>
-</body>
-</html>
+
+        function toggleVoice() {
+            const micBtn = document.getElementById('btnMic');
+            if (!('webkitSpeechRecognition' in window) && !('speechRecognition' in window)) {
+                alert("Browser tidak mendukung input mikrofon. Coba gunakan Google Chrome.");
+                return;
+            }
+
+            if(recognition && micBtn.classList.contains('recording')) {
+                recognition.stop();
+                return;
