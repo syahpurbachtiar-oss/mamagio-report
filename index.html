@@ -33,7 +33,7 @@
         .ai-card { background: #ffffff; padding: 20px; border-radius: 12px; border-left: 5px solid #6c5ce7; margin-top: 20px; box-shadow: 0 4px 6px rgba(0,0,0,0.05); }
         .ai-text { background: #f9f9ff; padding: 15px; border-radius: 8px; font-size: 0.9rem; color: #2d3436; line-height: 1.6; white-space: pre-line; border: 1px dashed #6c5ce7; margin-top: 10px; }
 
-        /* KOTAK CSS FITUR CHAT AI TAMBAHAN - TERISOLASI AGAR AMAN */
+        /* CSS TAMBAHAN UNTUK AREA CHAT AI (TIDAK MERUSAK APAPUN) */
         .chat-container { background: white; padding: 20px; border-radius: 12px; margin-top: 20px; box-shadow: 0 4px 6px rgba(0,0,0,0.05); border-top: 4px solid #00b894; }
         .chat-box { height: 200px; overflow-y: auto; background: #f8f9fa; padding: 15px; border-radius: 8px; border: 1px solid #eee; margin-bottom: 10px; display: flex; flex-direction: column; gap: 10px; }
         .msg { padding: 10px 14px; border-radius: 8px; max-width: 80%; font-size: 0.9rem; line-height: 1.4; }
@@ -120,10 +120,6 @@
     <script>
         const SCRIPT_URL = 'https://script.google.com/macros/s/AKfycbwNIIVGQuk5ZVPkIWviMkzyGzx5H_go1y7-9YaDzFNwbBi9Ds7mAUN_hxOby0SBRMYB/exec';
         let myChart;
-
-        // VARIABEL JALUR KHUSUS DATA AI CHAT
-        let rawDatabaseForAI = [];
-        const GEMINI_API_KEY = 'AIzaSyDqY9z1xXCVzqInv_LCt6Ip7tptymwvdgg';
         let voiceRecognitionEngine;
 
         function switchPage(pageId, element) {
@@ -137,7 +133,6 @@
             try {
                 const res = await fetch(SCRIPT_URL);
                 const data = await res.json();
-                rawDatabaseForAI = data; // Duplikasi data mentah secara aman ke jalur AI tanpa menyentuh fungsi asli
                 updateDashboard(data);
                 renderTable(data);
                 generateAI(data);
@@ -174,14 +169,13 @@
             let unggulan = sorted.length > 0 ? sorted[0][0] : "-";
             let kurangLaku = sorted.length > 1 ? sorted[sorted.length-1][0] : "-";
             
-            // Logika Otomatis Menghitung Jumlah Hari Berdasarkan Data Riwayat
             const daftarTanggal = [...new Set(data.map(d => d.tanggal))];
             const jumlahHari = daftarTanggal.length > 0 ? daftarTanggal.length : 1;
 
             let profitTotal = totalO - totalB;
             let avgProfit = Math.round(profitTotal / jumlahHari);
             let avgOmzet = Math.round(totalO / jumlahHari);
-            let avgBiaya = Math.round(totalB / jumlahHari); // Hitungan rata-rata biaya operasional harian
+            let avgBiaya = Math.round(totalB / jumlahHari);
 
             let hasilAnalisa = `📊 *HASIL ANALISA AI MAMA GIO*
 - *Rata-rata Omzet/Hari:* Rp ${avgOmzet.toLocaleString('id-ID')}
@@ -231,10 +225,7 @@
             location.reload();
         }
 
-        /* -------------------------------------------------------------
-           LOGIKA ISOLASI MANDIRI: INTERACTIVE AI LOGIC (CHAT & VOICE)
-           Sistem ini berdiri sendiri tanpa menyenggol fungsi dashboard utama.
-        ---------------------------------------------------------------- */
+        /* FUNCTION RE-ENGINE: SEKARANG CHAT DIKIRIM LEWAT PROXY SCRIPT_URL AGAR BEBAS CORS */
         async function sendChat() {
             const inputField = document.getElementById('chatInput');
             const userQuery = inputField.value.trim();
@@ -246,48 +237,38 @@
             addChatBubble("Tunggu sebentar Bosque, AI lagi ngitung data di Google Sheet...", 'bot-waiting');
 
             try {
-                // Membatasi snapshot data agar transfer token ringan dan efisien
-                const dataSnapshot = JSON.stringify(rawDatabaseForAI.slice(0, 400));
-                const finalPrompt = `Kamu adalah Asisten Keuangan Warung Mama Gio yang cerdas, ahli analisis database, dan asyik diajak ngobrol.
-Data transaksi riwayat warung (Format JSON): ${dataSnapshot}
-Tahun berjalan saat ini adalah 2026. Berdasarkan database di atas, jawablah pertanyaan user secara akurat, mendalam, namun ringkas dengan gaya bahasa santai/gaul (selalu panggil 'Bosque').
-Pertanyaan: ${userQuery}`;
-
-                const targetUrl = `https://generativelanguage.googleapis.com/v1beta/models/gemini-1.5-flash:generateContent?key=${GEMINI_API_KEY}`;
-                const apiResponse = await fetch(targetUrl, {
+                const response = await fetch(SCRIPT_URL, {
                     method: 'POST',
-                    headers: { 'Content-Type': 'application/json' },
-                    body: JSON.stringify({ contents: [{ parts: [{ text: finalPrompt }] }] })
+                    body: JSON.stringify({
+                        action: 'askAI',
+                        question: userQuery
+                    })
                 });
 
-                const parsedResult = await apiResponse.json();
-                let aiReplyText = parsedResult.candidates[0].content.parts[0].text;
-
-                // Hapus gelembung tunggu
+                const parsedResult = await response.json();
+                
                 const box = document.getElementById('chatBox');
                 const waitingBubble = box.querySelector('.bot-waiting');
                 if (waitingBubble) box.removeChild(waitingBubble);
 
-                addChatBubble(aiReplyText, 'bot', true);
+                if (parsedResult && parsedResult.reply) {
+                    addChatBubble(parsedResult.reply, 'bot', true);
+                } else {
+                    addChatBubble("Waduh Bosque, polosan nih responnya. Coba lagi ya!", 'bot');
+                }
             } catch (err) {
                 console.error(err);
                 const box = document.getElementById('chatBox');
                 const waitingBubble = box.querySelector('.bot-waiting');
                 if (waitingBubble) box.removeChild(waitingBubble);
-                addChatBubble("Aduh Bosque, server AI-nya mendadak pusing nih. Coba tanya sekali lagi ya!", 'bot');
+                addChatBubble("Aduh Bosque, server AI-nya mendadak pusing nih. Pastikan kamu sudah update kode Google Apps Script-nya ya!", 'bot');
             }
         }
 
         function addChatBubble(text, senderType, includeVoiceBtn = false) {
             const box = document.getElementById('chatBox');
             const bubble = document.createElement('div');
-            
-            if (senderType === 'bot-waiting') {
-                bubble.className = 'msg bot bot-waiting';
-            } else {
-                bubble.className = `msg ${senderType}`;
-            }
-            
+            bubble.className = senderType === 'bot-waiting' ? 'msg bot bot-waiting' : `msg ${senderType}`;
             bubble.innerText = text;
 
             if (includeVoiceBtn && senderType === 'bot') {
@@ -305,14 +286,11 @@ Pertanyaan: ${userQuery}`;
 
         function launchTextToSpeech(text) {
             if ('speechSynthesis' in window) {
-                // Membersihkan karakter format tulisan Markdown agar pelafalan robot bersih
                 let cleanPhrase = text.replace(/[*📊-]/g, '');
                 const vocalOutput = new SpeechSynthesisUtterance(cleanPhrase);
                 vocalOutput.lang = 'id-ID';
                 window.speechSynthesis.speak(vocalOutput);
-            } else { 
-                alert("Browser tidak mendukung pengeluaran suara robot."); 
-            }
+            } else { alert("Browser tidak mendukung pengeluaran suara robot."); }
         }
 
         function toggleVoice() {
@@ -321,27 +299,21 @@ Pertanyaan: ${userQuery}`;
                 alert("Browser tidak mengenali sistem mic. Harap gunakan Google Chrome!");
                 return;
             }
-
             if (voiceRecognitionEngine && micBtn.classList.contains('recording')) {
                 voiceRecognitionEngine.stop();
                 return;
             }
-
             const WebSpeechObject = window.SpeechRecognition || window.webkitSpeechRecognition;
             voiceRecognitionEngine = new WebSpeechObject();
             voiceRecognitionEngine.lang = 'id-ID';
             voiceRecognitionEngine.interimResults = false;
-
             voiceRecognitionEngine.onstart = () => { micBtn.classList.add('recording'); };
             voiceRecognitionEngine.onend = () => { micBtn.classList.remove('recording'); };
             voiceRecognitionEngine.onerror = () => { micBtn.classList.remove('recording'); };
-
             voiceRecognitionEngine.onresult = (event) => {
-                const vocalResult = event.results[0][0].transcript;
-                document.getElementById('chatInput').value = vocalResult;
+                document.getElementById('chatInput').value = event.results[0][0].transcript;
                 sendChat();
             };
-
             voiceRecognitionEngine.start();
         }
 
