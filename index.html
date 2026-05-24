@@ -128,7 +128,6 @@
         function generateAI(data) {
             let produkPalingLaku = {};
             let totalO = 0, totalB = 0;
-            let belanjaTermahal = { nama: 'bahan baku', harga: 0 };
 
             data.forEach(d => {
                 let n = parseInt(String(d.harga).replace(/[^0-9]/g, '')) || 0;
@@ -137,10 +136,6 @@
                     if(d.nama) produkPalingLaku[d.nama] = (produkPalingLaku[d.nama] || 0) + 1;
                 } else {
                     totalB += n;
-                    if(n > belanjaTermahal.harga) {
-                        belanjaTermahal.nama = d.nama;
-                        belanjaTermahal.harga = n;
-                    }
                 }
             });
 
@@ -148,17 +143,22 @@
             let unggulan = sorted.length > 0 ? sorted[0][0] : "-";
             let kurangLaku = sorted.length > 1 ? sorted[sorted.length-1][0] : "-";
             
+            // Logika Otomatis Menghitung Jumlah Hari Berdasarkan Data Riwayat
+            const daftarTanggal = [...new Set(data.map(d => d.tanggal))];
+            const jumlahHari = daftarTanggal.length > 0 ? daftarTanggal.length : 1;
+
             let profitTotal = totalO - totalB;
-            let avgProfit = Math.round(profitTotal / 7);
-            let avgOmzet = Math.round(totalO / 7);
+            let avgProfit = Math.round(profitTotal / jumlahHari);
+            let avgOmzet = Math.round(totalO / jumlahHari);
+            let avgBiaya = Math.round(totalB / jumlahHari); // Hitungan rata-rata biaya operasional harian
 
             let hasilAnalisa = `📊 *HASIL ANALISA AI MAMA GIO*
+- *Rata-rata Omzet/Hari:* Rp ${avgOmzet.toLocaleString('id-ID')}
+- *Rata-rata Biaya/Hari:* Rp ${avgBiaya.toLocaleString('id-ID')}
 - *Rata-rata Profit/Hari:* Rp ${avgProfit.toLocaleString('id-ID')}
 - *Produk Terlaris:* ${unggulan}
 - *Produk Kurang Laku:* ${kurangLaku}
-- *Rata-rata Omzet/Hari:* Rp ${avgOmzet.toLocaleString('id-ID')}
 - *Prediksi Omzet Minggu Depan:* Rp ${(avgOmzet * 7).toLocaleString('id-ID')}
-- *Fokus Biaya:* Pastikan stok ${belanjaTermahal.nama} selalu terkontrol karena biaya paling tinggi.
 - *Status Keuangan:* ${profitTotal > 0 ? 'Surplus (Aman)' : 'Defisit (Perlu Evaluasi)'}`;
 
             document.getElementById('aiAnalysisText').innerText = hasilAnalisa;
