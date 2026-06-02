@@ -33,6 +33,17 @@
         .ai-card { background: #ffffff; padding: 20px; border-radius: 12px; border-left: 5px solid #6c5ce7; margin-top: 20px; box-shadow: 0 4px 6px rgba(0,0,0,0.05); }
         .ai-text { background: #f9f9ff; padding: 15px; border-radius: 8px; font-size: 0.9rem; color: #2d3436; line-height: 1.6; white-space: pre-line; border: 1px dashed #6c5ce7; margin-top: 10px; }
 
+        
+        .ai-chat-container { background: #ffffff; padding: 20px; border-radius: 12px; margin-top: 20px; box-shadow: 0 4px 6px rgba(0,0,0,0.05); border-top: 4px solid #6c5ce7; }
+        .chat-box { background: #f9f9ff; border: 1px dashed #6c5ce7; border-radius: 10px; padding: 15px; height: 260px; overflow-y: auto; margin-top: 15px; }
+        .chat-message { margin-bottom: 15px; line-height: 1.5; }
+        .chat-user { color: #0984e3; font-weight: bold; }
+        .chat-ai { color: #6c5ce7; font-weight: bold; }
+        .chat-input-row { display: flex; gap: 10px; margin-top: 15px; }
+        .chat-input-row input { flex: 1; }
+        .btn-ai { background: #6c5ce7; color: white; border: none; padding: 12px 18px; border-radius: 8px; cursor: pointer; font-weight: bold; }
+        .btn-voice { background: #00b894; color: white; border: none; padding: 12px 18px; border-radius: 8px; cursor: pointer; font-weight: bold; }
+
         @media (max-width: 768px) {
             body { flex-direction: column; }
             .sidebar { width: 100%; display: flex; justify-content: space-around; padding: 10px 0; }
@@ -71,6 +82,24 @@
                 <b><i class="fas fa-robot"></i> Laporan Strategi AI Mama Gio</b>
                 <div id="aiAnalysisText" class="ai-text">Menganalisa data...</div>
             </div>
+
+            <div class="ai-chat-container">
+                <b><i class="fas fa-comments"></i> 🤖 AI Assistant Mama Gio</b>
+
+                <div id="chatBox" class="chat-box">
+                    <div class="chat-message">
+                        <span class="chat-ai">AI:</span>
+                        Halo 👋 Silakan tanyakan apa saja terkait data penjualan, pembeli, produk terlaris, jam ramai, profit, dan pengeluaran.
+                    </div>
+                </div>
+
+                <div class="chat-input-row">
+                    <input type="text" id="userQuestion" placeholder="Contoh: siapa 3 pembeli terbesar minggu ini?">
+                    <button class="btn-voice" onclick="startVoice()">🎤</button>
+                    <button class="btn-ai" onclick="askAI()">Kirim</button>
+                </div>
+            </div>
+
         </div>
 
         <div id="pengeluaran" class="page-content">
@@ -198,6 +227,134 @@
             await fetch(SCRIPT_URL, { method: 'POST', mode: 'no-cors', body: JSON.stringify({ nama: n, harga: parseInt(h), tipe: 'Keluar' }) });
             location.reload();
         }
+
+        async function askAI() {
+            const input = document.getElementById('userQuestion');
+            const chatBox = document.getElementById('chatBox');
+            const question = input.value.trim();
+
+            if (!question) return;
+
+            chatBox.innerHTML += `
+                <div class="chat-message">
+                    <span class="chat-user">User:</span>
+                    ${question}
+                </div>
+            `;
+
+            input.value = "";
+
+            try {
+                const res = await fetch(SCRIPT_URL);
+                const data = await res.json();
+
+                const pemasukan = data.filter(d => d.tipe === 'Masuk');
+                const pengeluaran = data.filter(d => d.tipe === 'Keluar');
+
+                let jawaban = "Data berhasil dibaca. AI siap dihubungkan ke OpenRouter / Apps Script AI.";
+
+                if(question.toLowerCase().includes('pembeli terbesar')) {
+
+                    let pembeli = {};
+
+                    pemasukan.forEach(d => {
+                        let nama = d.nama || 'Unknown';
+                        let nominal = parseInt(String(d.harga).replace(/[^0-9]/g, '')) || 0;
+
+                        pembeli[nama] = (pembeli[nama] || 0) + nominal;
+                    });
+
+                    let top = Object.entries(pembeli)
+                        .sort((a,b) => b[1]-a[1])
+                        .slice(0,3);
+
+                    jawaban = top.map((x,i)=>
+                        `${i+1}. ${x[0]} → Rp ${x[1].toLocaleString('id-ID')}`
+                    ).join('<br>');
+                }
+
+                else if(question.toLowerCase().includes('jam paling ramai')) {
+
+                    let jamMap = {};
+
+                    pemasukan.forEach(d => {
+                        let jam = (d.jam || '').split(':')[0];
+                        if(jam){
+                            jamMap[jam] = (jamMap[jam] || 0) + 1;
+                        }
+                    });
+
+                    let ramai = Object.entries(jamMap)
+                        .sort((a,b)=>b[1]-a[1])[0];
+
+                    if(ramai){
+                        jawaban = `Jam paling ramai adalah sekitar pukul ${ramai[0]}:00 dengan ${ramai[1]} transaksi.`;
+                    }
+                }
+
+                else if(question.toLowerCase().includes('produk terlaris')) {
+
+                    let produk = {};
+
+                    pemasukan.forEach(d => {
+                        let nama = d.nama || 'Unknown';
+                        produk[nama] = (produk[nama] || 0) + 1;
+                    });
+
+                    let topProduk = Object.entries(produk)
+                        .sort((a,b)=>b[1]-a[1])[0];
+
+                    if(topProduk){
+                        jawaban = `Produk terlaris adalah ${topProduk[0]} dengan total ${topProduk[1]} transaksi.`;
+                    }
+                }
+
+                chatBox.innerHTML += `
+                    <div class="chat-message">
+                        <span class="chat-ai">AI:</span>
+                        ${jawaban}
+                    </div>
+                `;
+
+                chatBox.scrollTop = chatBox.scrollHeight;
+
+                if ('speechSynthesis' in window) {
+                    const utter = new SpeechSynthesisUtterance(
+                        jawaban.replace(/<br>/g, '. ')
+                    );
+                    utter.lang = 'id-ID';
+                    speechSynthesis.speak(utter);
+                }
+
+            } catch(err){
+                console.error(err);
+            }
+        }
+
+        function startVoice() {
+
+            const SpeechRecognition =
+                window.SpeechRecognition ||
+                window.webkitSpeechRecognition;
+
+            if(!SpeechRecognition){
+                alert('Browser tidak mendukung voice recognition');
+                return;
+            }
+
+            const recognition = new SpeechRecognition();
+
+            recognition.lang = 'id-ID';
+            recognition.start();
+
+            recognition.onresult = function(event){
+                const text = event.results[0][0].transcript;
+                document.getElementById('userQuestion').value = text;
+                askAI();
+            };
+        }
+
+
         fetchData();
     </script>
 </body>
