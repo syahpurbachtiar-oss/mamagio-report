@@ -84,18 +84,18 @@
             </div>
 
             <div class="ai-chat-container">
-                <b><i class="fas fa-comments"></i> 🤖 AI Assistant Mama Gio</b>
+                <b><i class="fas fa-comments"></i> ?? AI Assistant Mama Gio</b>
 
                 <div id="chatBox" class="chat-box">
                     <div class="chat-message">
                         <span class="chat-ai">AI:</span>
-                        Halo 👋 Silakan tanyakan apa saja terkait data penjualan, pembeli, produk terlaris, jam ramai, profit, dan pengeluaran.
+                        Halo ?? Silakan tanyakan apa saja terkait data penjualan, pembeli, produk terlaris, jam ramai, profit, dan pengeluaran.
                     </div>
                 </div>
 
                 <div class="chat-input-row">
                     <input type="text" id="userQuestion" placeholder="Contoh: siapa 3 pembeli terbesar minggu ini?">
-                    <button class="btn-voice" onclick="startVoice()">🎤</button>
+                    <button class="btn-voice" onclick="startVoice()">??</button>
                     <button class="btn-ai" onclick="askAI()">Kirim</button>
                 </div>
             </div>
@@ -180,7 +180,7 @@
             let avgOmzet = Math.round(totalO / jumlahHari);
             let avgBiaya = Math.round(totalB / jumlahHari);
 
-            let hasilAnalisa = `📊 *HASIL ANALISA AI MAMA GIO*
+            let hasilAnalisa = `?? *HASIL ANALISA AI MAMA GIO*
 - *Rata-rata Omzet/Hari:* Rp ${avgOmzet.toLocaleString('id-ID')}
 - *Rata-rata Biaya/Hari:* Rp ${avgBiaya.toLocaleString('id-ID')}
 - *Rata-rata Profit/Hari:* Rp ${avgProfit.toLocaleString('id-ID')}
@@ -245,69 +245,19 @@
             input.value = "";
 
             try {
-                const res = await fetch(SCRIPT_URL);
-                const data = await res.json();
+                const res = await fetch(SCRIPT_URL, {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json'
+                    },
+                    body: JSON.stringify({
+                        question: question
+                    })
+                });
 
-                const pemasukan = data.filter(d => d.tipe === 'Masuk');
-                const pengeluaran = data.filter(d => d.tipe === 'Keluar');
+                const result = await res.json();
 
-                let jawaban = "Data berhasil dibaca. AI siap dihubungkan ke OpenRouter / Apps Script AI.";
-
-                if(question.toLowerCase().includes('pembeli terbesar')) {
-
-                    let pembeli = {};
-
-                    pemasukan.forEach(d => {
-                        let nama = d.nama || 'Unknown';
-                        let nominal = parseInt(String(d.harga).replace(/[^0-9]/g, '')) || 0;
-
-                        pembeli[nama] = (pembeli[nama] || 0) + nominal;
-                    });
-
-                    let top = Object.entries(pembeli)
-                        .sort((a,b) => b[1]-a[1])
-                        .slice(0,3);
-
-                    jawaban = top.map((x,i)=>
-                        `${i+1}. ${x[0]} → Rp ${x[1].toLocaleString('id-ID')}`
-                    ).join('<br>');
-                }
-
-                else if(question.toLowerCase().includes('jam paling ramai')) {
-
-                    let jamMap = {};
-
-                    pemasukan.forEach(d => {
-                        let jam = (d.jam || '').split(':')[0];
-                        if(jam){
-                            jamMap[jam] = (jamMap[jam] || 0) + 1;
-                        }
-                    });
-
-                    let ramai = Object.entries(jamMap)
-                        .sort((a,b)=>b[1]-a[1])[0];
-
-                    if(ramai){
-                        jawaban = `Jam paling ramai adalah sekitar pukul ${ramai[0]}:00 dengan ${ramai[1]} transaksi.`;
-                    }
-                }
-
-                else if(question.toLowerCase().includes('produk terlaris')) {
-
-                    let produk = {};
-
-                    pemasukan.forEach(d => {
-                        let nama = d.nama || 'Unknown';
-                        produk[nama] = (produk[nama] || 0) + 1;
-                    });
-
-                    let topProduk = Object.entries(produk)
-                        .sort((a,b)=>b[1]-a[1])[0];
-
-                    if(topProduk){
-                        jawaban = `Produk terlaris adalah ${topProduk[0]} dengan total ${topProduk[1]} transaksi.`;
-                    }
-                }
+                let jawaban = result.answer || 'AI tidak dapat memberikan jawaban.';
 
                 chatBox.innerHTML += `
                     <div class="chat-message">
