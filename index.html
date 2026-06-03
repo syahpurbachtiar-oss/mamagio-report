@@ -84,18 +84,18 @@
             </div>
 
             <div class="ai-chat-container">
-                <b><i class="fas fa-comments"></i> ?? AI Assistant Mama Gio</b>
+                <b><i class="fas fa-comments"></i> AI Assistant Mama Gio</b>
 
                 <div id="chatBox" class="chat-box">
                     <div class="chat-message">
                         <span class="chat-ai">AI:</span>
-                        Halo ?? Silakan tanyakan apa saja terkait data penjualan, pembeli, produk terlaris, jam ramai, profit, dan pengeluaran.
+                        Halo 👋 Silakan tanyakan apa saja terkait data penjualan, pembeli, produk terlaris, jam ramai, profit, dan pengeluaran.
                     </div>
                 </div>
 
                 <div class="chat-input-row">
                     <input type="text" id="userQuestion" placeholder="Contoh: siapa 3 pembeli terbesar minggu ini?">
-                    <button class="btn-voice" onclick="startVoice()">??</button>
+                    <button class="btn-voice" onclick="startVoice()">🎤</button>
                     <button class="btn-ai" onclick="askAI()">Kirim</button>
                 </div>
             </div>
@@ -122,7 +122,7 @@
     </div>
 
     <script>
-        const SCRIPT_URL = 'https://script.google.com/macros/s/AKfycbzdg_8Wp4EuWGgNoBuUyEWA3onURiKGe8iuhhgzU_QFPFHRnz9q_DdnFSCKd0zwaZ2Q/exec';
+        const SCRIPT_URL = "https://script.google.com/macros/s/AKfycbzdg_8Wp4EuWGgNoBuUyEWA3onURiKGe8iuhhgzU_QFPFHRnz9q_DdnFSCKd0zwaZ2Q/exec";
         let myChart;
 
         function switchPage(pageId, element) {
@@ -180,7 +180,7 @@
             let avgOmzet = Math.round(totalO / jumlahHari);
             let avgBiaya = Math.round(totalB / jumlahHari);
 
-            let hasilAnalisa = `?? *HASIL ANALISA AI MAMA GIO*
+            let hasilAnalisa = `📊 *HASIL ANALISA AI MAMA GIO*
 - *Rata-rata Omzet/Hari:* Rp ${avgOmzet.toLocaleString('id-ID')}
 - *Rata-rata Biaya/Hari:* Rp ${avgBiaya.toLocaleString('id-ID')}
 - *Rata-rata Profit/Hari:* Rp ${avgProfit.toLocaleString('id-ID')}
@@ -229,35 +229,126 @@
         }
 
         async function askAI() {
-            const input = document.getElementById('userQuestion');
-            const chatBox = document.getElementById('chatBox');
-            const question = input.value.trim();
 
-            if (!question) return;
+    const input = document.getElementById('userQuestion');
+    const chatBox = document.getElementById('chatBox');
 
-            chatBox.innerHTML += `
-                <div class="chat-message">
-                    <span class="chat-user">User:</span>
-                    ${question}
-                </div>
-            `;
+    const question = input.value.trim();
 
-            input.value = "";
+    if (!question) return;
 
-            try {
-                const res = await fetch(SCRIPT_URL, {
-                    method: 'POST',
-                    headers: {
-                        'Content-Type': 'application/json'
-                    },
-                    body: JSON.stringify({
-                        question: question
-                    })
-                });
+    chatBox.innerHTML += `
+        <div class="chat-message">
+            <span class="chat-user">User:</span>
+            ${question}
+        </div>
+    `;
 
-                const result = await res.json();
+    input.value = "";
 
-                let jawaban = result.answer || 'AI tidak dapat memberikan jawaban.';
+    try {
+
+        const res = await fetch(SCRIPT_URL, {
+            method: 'POST',
+            headers: {
+                'Content-Type': 'application/json'
+            },
+            body: JSON.stringify({
+                question: question
+            })
+        });
+
+        const text = await res.text();
+
+        let result = {};
+
+        try {
+            result = JSON.parse(text);
+        } catch(parseErr) {
+            console.error(parseErr);
+        }
+
+        let jawaban = result.answer || text || "AI tidak dapat memberikan jawaban.";
+
+        chatBox.innerHTML += `
+            <div class="chat-message">
+                <span class="chat-ai">AI:</span>
+                ${jawaban}
+            </div>
+        `;
+
+        chatBox.scrollTop = chatBox.scrollHeight;
+
+        if ('speechSynthesis' in window) {
+
+            speechSynthesis.cancel();
+
+            const utter = new SpeechSynthesisUtterance(
+                jawaban.replace(/<br>/g, '. ')
+            );
+
+            utter.lang = 'id-ID';
+
+            speechSynthesis.speak(utter);
+        }
+
+    } catch(err){
+
+        console.error(err);
+
+        chatBox.innerHTML += `
+            <div class="chat-message">
+                <span class="chat-ai">AI:</span>
+                Error koneksi AI: ${err.message}
+            </div>
+        `;
+    }
+});
+
+                    let top = Object.entries(pembeli)
+                        .sort((a,b) => b[1]-a[1])
+                        .slice(0,3);
+
+                    jawaban = top.map((x,i)=>
+                        `${i+1}. ${x[0]} ? Rp ${x[1].toLocaleString('id-ID')}`
+                    ).join('<br>');
+                }
+
+                else if(question.toLowerCase().includes('jam paling ramai')) {
+
+                    let jamMap = {};
+
+                    pemasukan.forEach(d => {
+                        let jam = (d.jam || '').split(':')[0];
+                        if(jam){
+                            jamMap[jam] = (jamMap[jam] || 0) + 1;
+                        }
+                    });
+
+                    let ramai = Object.entries(jamMap)
+                        .sort((a,b)=>b[1]-a[1])[0];
+
+                    if(ramai){
+                        jawaban = `Jam paling ramai adalah sekitar pukul ${ramai[0]}:00 dengan ${ramai[1]} transaksi.`;
+                    }
+                }
+
+                else if(question.toLowerCase().includes('produk terlaris')) {
+
+                    let produk = {};
+
+                    pemasukan.forEach(d => {
+                        let nama = d.nama || 'Unknown';
+                        produk[nama] = (produk[nama] || 0) + 1;
+                    });
+
+                    let topProduk = Object.entries(produk)
+                        .sort((a,b)=>b[1]-a[1])[0];
+
+                    if(topProduk){
+                        jawaban = `Produk terlaris adalah ${topProduk[0]} dengan total ${topProduk[1]} transaksi.`;
+                    }
+                }
 
                 chatBox.innerHTML += `
                     <div class="chat-message">
