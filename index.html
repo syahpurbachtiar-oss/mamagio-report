@@ -1,4 +1,3 @@
-```html
 <!DOCTYPE html>
 <html lang="id">
 
@@ -530,6 +529,9 @@
 const AI_URL =
 "https://warung-mama-gio-ai.syahpurbachtiar.workers.dev";
 
+const SCRIPT_URL =
+"https://script.google.com/macros/s/AKfycbzdg_8Wp4EuWGgNoBuUyEWA3onURiKGe8iuhhgzU_QFPFHRnz9q_DdnFSCKd0zwaZ2Q/exec";
+
 let myChart;
 
 
@@ -689,25 +691,25 @@ function generateAI(data) {
 
 `📊 HASIL ANALISA AI MAMA GIO
 
-• Rata-rata Omzet/Hari:
+ Rata-rata Omzet/Hari:
 Rp ${avgOmzet.toLocaleString('id-ID')}
 
-• Rata-rata Biaya/Hari:
+ Rata-rata Biaya/Hari:
 Rp ${avgBiaya.toLocaleString('id-ID')}
 
-• Rata-rata Profit/Hari:
+ Rata-rata Profit/Hari:
 Rp ${avgProfit.toLocaleString('id-ID')}
 
-• Produk Terlaris:
+ Produk Terlaris:
 ${unggulan}
 
-• Produk Kurang Laku:
+ Produk Kurang Laku:
 ${kurangLaku}
 
-• Prediksi Omzet Minggu Depan:
+ Prediksi Omzet Minggu Depan:
 Rp ${(avgOmzet * 7).toLocaleString('id-ID')}
 
-• Status Keuangan:
+ Status Keuangan:
 ${profitTotal > 0 ? 'Surplus (Aman)' : 'Defisit (Perlu Evaluasi)'}`;
 
     document.getElementById('aiAnalysisText')
@@ -839,7 +841,7 @@ async function simpanBelanja() {
     btn.disabled = true;
 
 
-    await fetch(SCRIPT_URL, {
+    await fetch(AI_URL, {
 
         method: 'POST',
 
