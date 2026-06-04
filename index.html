@@ -842,7 +842,7 @@ async function simpanBelanja() {
     btn.disabled = true;
 
 
-    await fetch(AI_URL, {
+    await fetch(SCRIPT_URL, {
 
         method: 'POST',
 
@@ -915,7 +915,7 @@ async function askAI() {
 
 
         const response =
-            await fetch(SCRIPT_URL, {
+            await fetch(AI_URL, {
 
                 method: 'POST',
 
