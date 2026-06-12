@@ -349,6 +349,7 @@
 
     <div class="main">
 
+        <!-- DASHBOARD -->
         <div id="dashboard" class="page-content active">
 
             <div class="stats-grid">
@@ -366,6 +367,7 @@
                 </div>
             </div>
 
+            <!-- INPUT PENGELUARAN DENGAN VOICE -->
             <div class="input-box">
                 <b><i class="fas fa-plus-circle"></i> Tambah Pengeluaran</b>
                 <div class="input-row">
@@ -380,6 +382,7 @@
                 </div>
             </div>
 
+            <!-- CHART UTAMA (PIE CHART) -->
             <div style="background:white; padding:20px; border-radius:12px; display: flex; flex-direction: column; align-items: center;">
                 <h3 id="pieChartTitle" style="margin-top:0; color:#2c3e50; font-size:1.1rem; font-weight:bold;">
                     Omzet = 0% vs Biaya = 0%
@@ -389,6 +392,7 @@
                 </div>
             </div>
 
+            <!-- AI ANALYSIS -->
             <div class="ai-card">
                 <b><i class="fas fa-robot"></i> 📊 Laporan Strategi AI Mama Gio</b>
                 <div id="aiAnalysisText" class="ai-text">
@@ -396,6 +400,7 @@
                 </div>
             </div>
 
+            <!-- AI CHAT -->
             <div class="ai-chat-container">
                 <b><i class="fas fa-comments"></i> 🎤 AI Assistant Mama Gio</b>
                 <div id="chatBox" class="chat-box">
@@ -413,12 +418,14 @@
 
         </div>
 
+        <!-- PENGELUARAN (DETAIL CASH FLOW) -->
         <div id="pengeluaran" class="page-content">
             <div class="page-header">
                 <h2>Detail Cash Flow</h2>
                 <p>Analisis bulanan dan riwayat transaksi</p>
             </div>
 
+            <!-- STATISTIK BULANAN -->
             <div class="table-card">
                 <h3 style="margin-top:0; margin-bottom:15px; color:#2c3e50;">Statistik Bulanan</h3>
                 <div style="position: relative; height: 250px; width: 100%;">
@@ -426,6 +433,7 @@
                 </div>
             </div>
 
+            <!-- RIWAYAT TRANSAKSI -->
             <div class="table-card">
                 <h3 style="margin-top:0; margin-bottom:15px; color:#2c3e50;">Riwayat Transaksi</h3>
                 <div style="overflow-x:auto">
@@ -474,8 +482,7 @@ async function fetchData() {
         const res = await fetch(SCRIPT_URL);
         const rawData = await res.json();
         
-        // 🚀 OPTIMASI PERFORMA: Pre-processing Data Satu Kali di Awal
-        // Meringankan beban CPU di HP karena tidak perlu parsing angka berulang-ulang
+        // Meringankan beban CPU dengan pre-processing satu kali
         const cleanData = rawData.map(d => ({
             ...d,
             nomHarga: parseInt(String(d.harga).replace(/[^0-9]/g, '')) || 0,
@@ -591,24 +598,47 @@ ${profitTotal > 0 ? 'Surplus (Aman)' : 'Defisit (Perlu Evaluasi)'}`;
     document.getElementById('aiAnalysisText').innerText = hasilAnalisa;
 }
 
-// 🚀 OPTIMASI PERFORMA: Batch DOM Rendering
+// FUNGSI UNTUK MENGUBAH TANGGAL & JAM MENJADI TIMESTAMP UNTUK SORTING
+function parseToTimestamp(tgl, jam) {
+    if(!tgl) return 0;
+    
+    // Parsing Tanggal (Asumsi format DD/MM/YYYY atau D/M/YYYY)
+    let pTgl = tgl.split(/[/\-]/);
+    let D = parseInt(pTgl[0]) || 1;
+    let M = (parseInt(pTgl[1]) || 1) - 1; // Bulan di Javascript Date dimulai dari 0
+    let Y = parseInt(pTgl[2]) || 2026;
+    
+    // Parsing Jam (Asumsi format HH.MM atau HH.MM.SS)
+    let pJam = (jam || "0.0").split('.');
+    let h = parseInt(pJam[0]) || 0;
+    let m = parseInt(pJam[1]) || 0;
+    let s = parseInt(pJam[2]) || 0;
+    
+    // Kembalikan nilai milidetik murni
+    return new Date(Y, M, D, h, m, s).getTime();
+}
+
 function renderDetailCashFlow(data) {
     let monthlyStats = {};
     let totalNominalSemua = 0;
     let qtyItem = 0;
-    let barisHtml = ""; // Variabel penampung string HTML
+    let barisHtml = "";
 
-    // Filter yang valid lalu reverse data
-    let reversedData = data.filter(d => d.nama && d.harga).slice().reverse();
+    // MENGURUTKAN SELURUH DATA BERDASARKAN WAKTU TERBARU -> TERLAMA (Campur Omzet & Biaya)
+    let sortedData = data.filter(d => d.nama && d.harga).sort((a, b) => {
+        let timeA = parseToTimestamp(a.tanggal, a.jam);
+        let timeB = parseToTimestamp(b.tanggal, b.jam);
+        return timeB - timeA; // Descending (Waktu terbaru di atas)
+    });
 
-    reversedData.forEach(d => {
+    sortedData.forEach(d => {
         qtyItem++;
         totalNominalSemua += d.nomHarga;
 
         let tipeTeks = d.isOmzet ? 'Omzet' : 'Biaya';
         let tipeClass = d.isOmzet ? 'tipe-omzet' : 'tipe-biaya';
 
-        // Gabungkan teks HTML ke variabel (Tidak melukis tabel per baris di layar)
+        // Susun HTML langsung (Batch Rendering)
         barisHtml += `
             <tr>
                 <td>${d.hari || '-'}</td>
@@ -622,7 +652,7 @@ function renderDetailCashFlow(data) {
             </tr>
         `;
 
-        // Chart Bulanan Stats
+        // Kalkulasi Chart Bulanan
         if(d.tanggal) {
             let parts = d.tanggal.split(/[/\-]/);
             if(parts.length >= 3) {
@@ -645,7 +675,7 @@ function renderDetailCashFlow(data) {
         }
     });
 
-    // Tempelkan seluruh baris ke layar hanya 1 KALI saja di akhir
+    // Tempelkan seluruh baris sekaligus untuk performa secepat kilat
     document.getElementById('tableBody').innerHTML = barisHtml;
     
     document.getElementById('totalQty').innerText = "Jumlah: " + qtyItem + " Transaksi";
