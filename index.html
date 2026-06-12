@@ -135,7 +135,6 @@
             transition: 0.3s;
         }
 
-        /* TOMBOL MIC PENGELUARAN */
         .btn-mic-input {
             background: #f1f5f9;
             color: #64748b;
@@ -339,171 +338,82 @@
 <body>
 
     <div class="sidebar">
-
         <h2>MAMA GIO ADMIN</h2>
-
-        <div class="nav-item active"
-             onclick="switchPage('dashboard', this)">
-            <i class="fas fa-th-large"></i>
-            &nbsp; Dashboard
+        <div class="nav-item active" onclick="switchPage('dashboard', this)">
+            <i class="fas fa-th-large"></i> &nbsp; Dashboard
         </div>
-
-        <div class="nav-item"
-             onclick="switchPage('pengeluaran', this)">
-            <i class="fas fa-wallet"></i>
-            &nbsp; Cash Flow
+        <div class="nav-item" onclick="switchPage('pengeluaran', this)">
+            <i class="fas fa-wallet"></i> &nbsp; Cash Flow
         </div>
-
     </div>
 
     <div class="main">
 
-        <div id="dashboard"
-             class="page-content active">
+        <div id="dashboard" class="page-content active">
 
             <div class="stats-grid">
-
                 <div class="stat-card">
                     <h3>Omzet</h3>
-                    <p id="txtOmzet"
-                       style="color:#1abc9c">
-                        Rp 0
-                    </p>
+                    <p id="txtOmzet" style="color:#1abc9c">Rp 0</p>
                 </div>
-
                 <div class="stat-card">
                     <h3>Biaya</h3>
-                    <p id="txtBiaya"
-                       style="color:#e74c3c">
-                        Rp 0
-                    </p>
+                    <p id="txtBiaya" style="color:#e74c3c">Rp 0</p>
                 </div>
-
                 <div class="stat-card">
                     <h3>Profit</h3>
-                    <p id="txtProfit"
-                       style="color:#3498db">
-                        Rp 0
-                    </p>
+                    <p id="txtProfit" style="color:#3498db">Rp 0</p>
                 </div>
-
             </div>
 
             <div class="input-box">
-
-                <b>
-                    <i class="fas fa-plus-circle"></i>
-                    Tambah Pengeluaran
-                </b>
-
+                <b><i class="fas fa-plus-circle"></i> Tambah Pengeluaran</b>
                 <div class="input-row">
-
-                    <input type="text"
-                           id="nama"
-                           placeholder="Barang...">
-
-                    <input type="number"
-                           id="harga"
-                           placeholder="Harga Rp">
-
-                    <button class="btn-save"
-                            id="btnSimpan"
-                            onclick="simpanBelanja()">
+                    <input type="text" id="nama" placeholder="Barang...">
+                    <input type="number" id="harga" placeholder="Harga Rp">
+                    <button class="btn-save" id="btnSimpan" onclick="simpanBelanja()">
                         SIMPAN
                     </button>
-
-                    <button class="btn-mic-input"
-                            id="btnMicPengeluaran"
-                            onclick="startVoicePengeluaran()"
-                            title="Klik lalu bicara, misal: 'Beli minyak 50 ribu'">
+                    <button class="btn-mic-input" id="btnMicPengeluaran" onclick="startVoicePengeluaran()" title="Klik lalu bicara, misal: 'Beli minyak 50 ribu'">
                         <i class="fas fa-microphone"></i>
                     </button>
-
                 </div>
             </div>
 
-            <div style="
-                background:white;
-                padding:20px;
-                border-radius:12px;
-                display: flex;
-                flex-direction: column;
-                align-items: center;
-            ">
+            <div style="background:white; padding:20px; border-radius:12px; display: flex; flex-direction: column; align-items: center;">
                 <h3 id="pieChartTitle" style="margin-top:0; color:#2c3e50; font-size:1.1rem; font-weight:bold;">
                     Omzet = 0% vs Biaya = 0%
                 </h3>
-                
                 <div style="position: relative; height: 300px; width: 100%;">
                     <canvas id="chartUtama"></canvas>
                 </div>
             </div>
 
             <div class="ai-card">
-
-                <b>
-                    <i class="fas fa-robot"></i>
-                    📊 Laporan Strategi AI Mama Gio
-                </b>
-
-                <div id="aiAnalysisText"
-                     class="ai-text">
+                <b><i class="fas fa-robot"></i> 📊 Laporan Strategi AI Mama Gio</b>
+                <div id="aiAnalysisText" class="ai-text">
                     Menganalisa data...
                 </div>
-
             </div>
 
             <div class="ai-chat-container">
-
-                <b>
-                    <i class="fas fa-comments"></i>
-                    🎤 AI Assistant Mama Gio
-                </b>
-
-                <div id="chatBox"
-                     class="chat-box">
-
+                <b><i class="fas fa-comments"></i> 🎤 AI Assistant Mama Gio</b>
+                <div id="chatBox" class="chat-box">
                     <div class="chat-message">
-                        <span class="chat-ai">
-                            AI:
-                        </span>
-                        Halo 👋
-                        Silakan tanyakan apa saja
-                        terkait data penjualan,
-                        pembeli,
-                        produk terlaris,
-                        jam ramai,
-                        profit,
-                        dan pengeluaran.
+                        <span class="chat-ai">AI:</span>
+                        Halo 👋 Silakan tanyakan apa saja terkait data penjualan, pembeli, produk terlaris, jam ramai, profit, dan pengeluaran.
                     </div>
-
                 </div>
-
                 <div class="chat-input-row">
-
-                    <input type="text"
-                           id="userQuestion"
-                           placeholder="Contoh: siapa pembeli terbesar bulan ini?">
-
-                    <button class="btn-voice"
-                            onclick="startVoice()">
-                        🎤
-                    </button>
-
-                    <button class="btn-ai"
-                            onclick="askAI()">
-                        Kirim
-                    </button>
-
+                    <input type="text" id="userQuestion" placeholder="Contoh: siapa pembeli terbesar bulan ini?">
+                    <button class="btn-voice" onclick="startVoice()">🎤</button>
+                    <button class="btn-ai" onclick="askAI()">Kirim</button>
                 </div>
-
             </div>
 
         </div>
 
-        <div id="pengeluaran"
-             class="page-content">
-
+        <div id="pengeluaran" class="page-content">
             <div class="page-header">
                 <h2>Detail Cash Flow</h2>
                 <p>Analisis bulanan dan riwayat transaksi</p>
@@ -517,9 +427,7 @@
             </div>
 
             <div class="table-card">
-
                 <h3 style="margin-top:0; margin-bottom:15px; color:#2c3e50;">Riwayat Transaksi</h3>
-
                 <div style="overflow-x:auto">
                     <table>
                         <thead>
@@ -532,27 +440,16 @@
                                 <th>Nominal</th>
                             </tr>
                         </thead>
-
                         <tbody id="tableBody"></tbody>
-
                         <tfoot>
                             <tr class="summary-row">
-                                <td colspan="4"
-                                    id="totalQty"
-                                    style="text-align:right">
-                                    Jumlah: 0 Item
-                                </td>
-                                <td colspan="2"
-                                    id="totalNominal">
-                                    Total: Rp 0
-                                </td>
+                                <td colspan="4" id="totalQty" style="text-align:right">Jumlah: 0 Item</td>
+                                <td colspan="2" id="totalNominal">Total: Rp 0</td>
                             </tr>
                         </tfoot>
                     </table>
                 </div>
-
             </div>
-
         </div>
 
     </div>
@@ -575,11 +472,20 @@ function switchPage(pageId, element) {
 async function fetchData() {
     try {
         const res = await fetch(SCRIPT_URL);
-        const data = await res.json();
+        const rawData = await res.json();
         
-        updateDashboard(data);
-        renderDetailCashFlow(data); // Fungsi baru menggantikan renderTable
-        generateAI(data);
+        // 🚀 OPTIMASI PERFORMA: Pre-processing Data Satu Kali di Awal
+        // Meringankan beban CPU di HP karena tidak perlu parsing angka berulang-ulang
+        const cleanData = rawData.map(d => ({
+            ...d,
+            nomHarga: parseInt(String(d.harga).replace(/[^0-9]/g, '')) || 0,
+            isOmzet: d.tipe === 'Masuk',
+            jamBersih: d.jam ? d.jam.split('.').slice(0,2).join('.') : '-'
+        }));
+
+        updateDashboard(cleanData);
+        renderDetailCashFlow(cleanData);
+        generateAI(cleanData);
     } catch(e) {
         console.error(e);
     }
@@ -590,12 +496,8 @@ function updateDashboard(data) {
     let b = 0;
 
     data.forEach(d => {
-        let nom = parseInt(String(d.harga).replace(/[^0-9]/g, '')) || 0;
-        if(d.tipe === 'Masuk') {
-            o += nom;
-        } else {
-            b += nom;
-        }
+        if(d.isOmzet) o += d.nomHarga;
+        else b += d.nomHarga;
     });
 
     document.getElementById('txtOmzet').innerText = "Rp " + o.toLocaleString('id-ID');
@@ -605,7 +507,6 @@ function updateDashboard(data) {
     showPieChart(o, b);
 }
 
-// FUNGSI BARU: PIE CHART
 function showPieChart(omzet, biaya) {
     const total = omzet + biaya;
     let pctOmzet = 0;
@@ -616,14 +517,13 @@ function showPieChart(omzet, biaya) {
         pctBiaya = ((biaya / total) * 100).toFixed(1);
     }
 
-    // Update Text Dinamis
     document.getElementById('pieChartTitle').innerText = `Omzet = ${pctOmzet}% vs Biaya = ${pctBiaya}%`;
 
     const ctx = document.getElementById('chartUtama').getContext('2d');
     if(myChartUtama) myChartUtama.destroy();
 
     myChartUtama = new Chart(ctx, {
-        type: 'doughnut', // doughnut atau pie
+        type: 'pie',
         data: {
             labels: ['Pemasukan (Omzet)', 'Pengeluaran (Biaya)'],
             datasets: [{
@@ -636,9 +536,7 @@ function showPieChart(omzet, biaya) {
         options: {
             maintainAspectRatio: false,
             plugins: {
-                legend: {
-                    position: 'bottom'
-                }
+                legend: { position: 'bottom' }
             }
         }
     });
@@ -650,16 +548,14 @@ function generateAI(data) {
     let totalB = 0;
 
     data.forEach(d => {
-        let n = parseInt(String(d.harga).replace(/[^0-9]/g, '')) || 0;
-
-        if(d.tipe === 'Masuk') {
-            totalO += n;
+        if(d.isOmzet) {
+            totalO += d.nomHarga;
             if(d.nama) {
                 let namaBersih = d.nama.replace(/\s*\(.*?\)/g, '').trim();
                 produkPalingLaku[namaBersih] = (produkPalingLaku[namaBersih] || 0) + 1;
             }
         } else {
-            totalB += n;
+            totalB += d.nomHarga;
         }
     });
 
@@ -667,7 +563,7 @@ function generateAI(data) {
     let unggulan = sorted.length > 0 ? sorted[0][0] : "-";
     let kurangLaku = sorted.length > 1 ? sorted[sorted.length-1][0] : "-";
 
-    const daftarTanggal = [...new Set(data.filter(d => d.tipe === 'Masuk').map(d => d.tanggal))];
+    const daftarTanggal = [...new Set(data.filter(d => d.isOmzet).map(d => d.tanggal))];
     const jumlahHari = daftarTanggal.length > 0 ? daftarTanggal.length : 1;
 
     let profitTotal = totalO - totalB;
@@ -695,54 +591,41 @@ ${profitTotal > 0 ? 'Surplus (Aman)' : 'Defisit (Perlu Evaluasi)'}`;
     document.getElementById('aiAnalysisText').innerText = hasilAnalisa;
 }
 
-
-// FUNGSI BARU: RENDER DETAIL CASH FLOW (Statistik Bulanan & Tabel Semua Data)
+// 🚀 OPTIMASI PERFORMA: Batch DOM Rendering
 function renderDetailCashFlow(data) {
-    // 1. SIAPKAN DATA STATISTIK BULANAN
     let monthlyStats = {};
-    
-    // 2. SIAPKAN TABEL RIWAYAT TRANSAKSI (Semua Data)
-    const tbody = document.getElementById('tableBody');
-    tbody.innerHTML = "";
-    
-    let totalNominalSemua = 0; // Hanya untuk footer
+    let totalNominalSemua = 0;
     let qtyItem = 0;
+    let barisHtml = ""; // Variabel penampung string HTML
 
-    // Filter data yg valid, lalu balik urutannya agar dari yg paling baru (Asumsi sheet dari atas ke bawah)
+    // Filter yang valid lalu reverse data
     let reversedData = data.filter(d => d.nama && d.harga).slice().reverse();
 
     reversedData.forEach(d => {
-        let nom = parseInt(String(d.harga).replace(/[^0-9]/g, '')) || 0;
         qtyItem++;
-        totalNominalSemua += nom; // Menggabungkan total perputaran uang
+        totalNominalSemua += d.nomHarga;
 
-        // Ekstrak Jam
-        let jamBersih = d.jam ? d.jam.split('.').slice(0,2).join('.') : '-';
+        let tipeTeks = d.isOmzet ? 'Omzet' : 'Biaya';
+        let tipeClass = d.isOmzet ? 'tipe-omzet' : 'tipe-biaya';
 
-        // Styling Tipe (Omzet vs Biaya)
-        let isOmzet = d.tipe === 'Masuk';
-        let tipeTeks = isOmzet ? 'Omzet' : 'Biaya';
-        let tipeClass = isOmzet ? 'tipe-omzet' : 'tipe-biaya';
-
-        // Masukkan Baris Tabel
-        tbody.innerHTML += `
+        // Gabungkan teks HTML ke variabel (Tidak melukis tabel per baris di layar)
+        barisHtml += `
             <tr>
                 <td>${d.hari || '-'}</td>
                 <td>${d.tanggal || '-'}</td>
-                <td>${jamBersih}</td>
+                <td>${d.jamBersih}</td>
                 <td><span class="tipe-badge ${tipeClass}">${tipeTeks}</span></td>
                 <td>${d.nama}</td>
-                <td style="${isOmzet ? 'color:#059669;' : 'color:#dc2626;'} font-weight:500;">
-                    ${isOmzet ? '+' : '-'} Rp ${nom.toLocaleString('id-ID')}
+                <td style="${d.isOmzet ? 'color:#059669;' : 'color:#dc2626;'} font-weight:500;">
+                    ${d.isOmzet ? '+' : '-'} Rp ${d.nomHarga.toLocaleString('id-ID')}
                 </td>
             </tr>
         `;
 
-        // Proses Untuk Chart Bulanan
+        // Chart Bulanan Stats
         if(d.tanggal) {
-            let parts = d.tanggal.split(/[/\-]/); // Pecah format tanggal
+            let parts = d.tanggal.split(/[/\-]/);
             if(parts.length >= 3) {
-                // Asumsi format DD/MM/YYYY
                 let month = parts[1];
                 let year = parts[2];
                 let key = `${month}-${year}`;
@@ -750,22 +633,24 @@ function renderDetailCashFlow(data) {
                 const monthNames = ["Jan", "Feb", "Mar", "Apr", "Mei", "Jun", "Jul", "Ags", "Sep", "Okt", "Nov", "Des"];
                 let mIdx = parseInt(month) - 1;
                 let labelBulan = `${monthNames[mIdx]} ${year}`;
-                let sortKey = parseInt(year) * 100 + parseInt(month); // Untuk urutan chart
+                let sortKey = parseInt(year) * 100 + parseInt(month);
 
                 if(!monthlyStats[sortKey]) {
                     monthlyStats[sortKey] = { label: labelBulan, omzet: 0, biaya: 0 };
                 }
 
-                if(isOmzet) monthlyStats[sortKey].omzet += nom;
-                else monthlyStats[sortKey].biaya += nom;
+                if(d.isOmzet) monthlyStats[sortKey].omzet += d.nomHarga;
+                else monthlyStats[sortKey].biaya += d.nomHarga;
             }
         }
     });
 
+    // Tempelkan seluruh baris ke layar hanya 1 KALI saja di akhir
+    document.getElementById('tableBody').innerHTML = barisHtml;
+    
     document.getElementById('totalQty').innerText = "Jumlah: " + qtyItem + " Transaksi";
     document.getElementById('totalNominal').innerText = "Total Perputaran: Rp " + totalNominalSemua.toLocaleString('id-ID');
 
-    // 3. RENDER BAR CHART BULANAN
     renderChartBulanan(monthlyStats);
 }
 
@@ -806,13 +691,10 @@ function renderChartBulanan(monthlyStats) {
         options: {
             responsive: true,
             maintainAspectRatio: false,
-            scales: {
-                y: { beginAtZero: true }
-            }
+            scales: { y: { beginAtZero: true } }
         }
     });
 }
-
 
 async function simpanBelanja() {
     const n = document.getElementById('nama').value;
@@ -837,7 +719,6 @@ async function simpanBelanja() {
     location.reload();
 }
 
-// FUNGSI BARU: VOICE COMMAND UNTUK TAMBAH PENGELUARAN OTOMATIS
 function startVoicePengeluaran() {
     const SpeechRecognition = window.SpeechRecognition || window.webkitSpeechRecognition;
     if(!SpeechRecognition) {
@@ -857,19 +738,15 @@ function startVoicePengeluaran() {
         btnMic.classList.remove('listening');
         const text = event.results[0][0].transcript.toLowerCase();
         
-        // Logika Ekstraksi Teks ke Barang dan Nominal
-        // Menghapus kata 'rp', titik, koma
         let cleanText = text.replace(/rp/g, '').replace(/\./g, '').replace(/,/g, '');
         let price = 0;
         let itemName = cleanText;
 
-        // Cek jika pengguna menyebut kata "ribu"
         let matchRibu = cleanText.match(/(\d+)\s*ribu/);
         if (matchRibu) {
             price = parseInt(matchRibu[1]) * 1000;
             itemName = cleanText.replace(matchRibu[0], '');
         } else {
-            // Cari sekumpulan angka terakhir di kalimat
             let matchAngka = cleanText.match(/(\d+)(?!.*\d)/);
             if (matchAngka) {
                 price = parseInt(matchAngka[1]);
@@ -879,7 +756,6 @@ function startVoicePengeluaran() {
 
         itemName = itemName.trim();
 
-        // Kata awal pembersihan khusus jika ada (misal bilang: "beli minyak")
         if (itemName.startsWith('beli ')) {
             itemName = itemName.substring(5).trim();
         }
@@ -889,24 +765,14 @@ function startVoicePengeluaran() {
             return;
         }
 
-        // Isi ke dalam input
         document.getElementById('nama').value = itemName;
         document.getElementById('harga').value = price;
-
-        // Tanya Konfirmasi / Auto Simpan
-        // Karena ini perintah "Otomatis tersimpan", kita panggil simpanBelanja()
         simpanBelanja(); 
     };
 
-    recognition.onerror = function() {
-        btnMic.classList.remove('listening');
-    };
-    
-    recognition.onend = function() {
-        btnMic.classList.remove('listening');
-    };
+    recognition.onerror = function() { btnMic.classList.remove('listening'); };
+    recognition.onend = function() { btnMic.classList.remove('listening'); };
 }
-
 
 async function askAI() {
     const input = document.getElementById('userQuestion');
@@ -927,8 +793,7 @@ async function askAI() {
     try {
         chatBox.innerHTML += `
             <div id="loadingAI" class="chat-message">
-                <span class="chat-ai">AI:</span>
-                Sedang berpikir...
+                <span class="chat-ai">AI:</span> Sedang berpikir...
             </div>
         `;
 
@@ -943,11 +808,7 @@ async function askAI() {
         if(loading) loading.remove();
 
         let result = {};
-        try {
-            result = JSON.parse(raw);
-        } catch(e){
-            console.error(e);
-        }
+        try { result = JSON.parse(raw); } catch(e){ console.error(e); }
 
         let jawaban = result.answer || raw || "AI tidak dapat memberikan jawaban.";
 
@@ -969,11 +830,7 @@ async function askAI() {
 
     } catch(err){
         console.error(err);
-        chatBox.innerHTML += `
-            <div class="chat-message" style="color:red;">
-                Error AI: ${err.message}
-            </div>
-        `;
+        chatBox.innerHTML += `<div class="chat-message" style="color:red;">Error AI: ${err.message}</div>`;
     }
 }
 
@@ -988,8 +845,7 @@ function startVoice() {
     recognition.start();
 
     recognition.onresult = function(event){
-        const text = event.results[0][0].transcript;
-        document.getElementById('userQuestion').value = text;
+        document.getElementById('userQuestion').value = event.results[0][0].transcript;
         askAI();
     };
 }
