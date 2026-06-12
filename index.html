@@ -349,7 +349,6 @@
 
     <div class="main">
 
-        <!-- DASHBOARD -->
         <div id="dashboard" class="page-content active">
 
             <div class="stats-grid">
@@ -367,7 +366,6 @@
                 </div>
             </div>
 
-            <!-- INPUT PENGELUARAN DENGAN VOICE -->
             <div class="input-box">
                 <b><i class="fas fa-plus-circle"></i> Tambah Pengeluaran</b>
                 <div class="input-row">
@@ -382,7 +380,6 @@
                 </div>
             </div>
 
-            <!-- CHART UTAMA (PIE CHART) -->
             <div style="background:white; padding:20px; border-radius:12px; display: flex; flex-direction: column; align-items: center;">
                 <h3 id="pieChartTitle" style="margin-top:0; color:#2c3e50; font-size:1.1rem; font-weight:bold;">
                     Omzet = 0% vs Biaya = 0%
@@ -392,7 +389,6 @@
                 </div>
             </div>
 
-            <!-- AI ANALYSIS -->
             <div class="ai-card">
                 <b><i class="fas fa-robot"></i> 📊 Laporan Strategi AI Mama Gio</b>
                 <div id="aiAnalysisText" class="ai-text">
@@ -400,7 +396,6 @@
                 </div>
             </div>
 
-            <!-- AI CHAT -->
             <div class="ai-chat-container">
                 <b><i class="fas fa-comments"></i> 🎤 AI Assistant Mama Gio</b>
                 <div id="chatBox" class="chat-box">
@@ -418,14 +413,12 @@
 
         </div>
 
-        <!-- PENGELUARAN (DETAIL CASH FLOW) -->
         <div id="pengeluaran" class="page-content">
             <div class="page-header">
                 <h2>Detail Cash Flow</h2>
                 <p>Analisis bulanan dan riwayat transaksi</p>
             </div>
 
-            <!-- STATISTIK BULANAN -->
             <div class="table-card">
                 <h3 style="margin-top:0; margin-bottom:15px; color:#2c3e50;">Statistik Bulanan</h3>
                 <div style="position: relative; height: 250px; width: 100%;">
@@ -433,7 +426,6 @@
                 </div>
             </div>
 
-            <!-- RIWAYAT TRANSAKSI -->
             <div class="table-card">
                 <h3 style="margin-top:0; margin-bottom:15px; color:#2c3e50;">Riwayat Transaksi</h3>
                 <div style="overflow-x:auto">
@@ -486,8 +478,8 @@ async function fetchData() {
             ...d,
             nomHarga: parseInt(String(d.harga).replace(/[^0-9]/g, '')) || 0,
             isOmzet: d.tipe === 'Masuk',
-            // PERBAIKAN: Menyeragamkan tampilan jam walaupun di sheet memakai titik (:)
-            jamBersih: d.jam ? String(d.jam).replace(':', '.').split('.').slice(0,2).join('.') : '-'
+            // MEMAKSA SEMUA FORMAT JAM MENGGUNAKAN TITIK DUA (:)
+            jamBersih: d.jam ? String(d.jam).replace(/\./g, ':').split(':').slice(0,2).join(':') : '-'
         }));
 
         updateDashboard(cleanData);
@@ -598,7 +590,6 @@ ${profitTotal > 0 ? 'Surplus (Aman)' : 'Defisit (Perlu Evaluasi)'}`;
     document.getElementById('aiAnalysisText').innerText = hasilAnalisa;
 }
 
-// PERBAIKAN: Membaca format jam yang memakai titik maupun titik dua
 function parseToTimestamp(tgl, jam) {
     if(!tgl) return 0;
     
@@ -607,7 +598,6 @@ function parseToTimestamp(tgl, jam) {
     let M = (parseInt(pTgl[1]) || 1) - 1;
     let Y = parseInt(pTgl[2]) || 2026;
     
-    // Regex /[.:]/ akan memotong baik jam "03.05" maupun "3:02"
     let pJam = String(jam || "0:0").split(/[.:]/);
     let h = parseInt(pJam[0]) || 0;
     let m = parseInt(pJam[1]) || 0;
@@ -622,7 +612,6 @@ function renderDetailCashFlow(data) {
     let qtyItem = 0;
     let barisHtml = "";
 
-    // PENGURUTAN MUTLAK: Terbaru di Atas (Descending) berdasarkan waktu riil Timestamp
     let sortedData = data.filter(d => d.nama && d.harga).sort((a, b) => {
         let timeA = parseToTimestamp(a.tanggal, a.jam);
         let timeB = parseToTimestamp(b.tanggal, b.jam);
