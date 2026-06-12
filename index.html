@@ -100,13 +100,6 @@
             margin: 10px 0 0;
             font-size: 1.5rem;
             font-weight: bold;
-            box-shadow: 0 4px 6px rgba(0,0,0,0.05);
-        }
-
-        .stat-card p {
-            margin: 10px 0 0;
-            font-size: 1.5rem;
-            font-weight: bold;
         }
 
         .input-box {
@@ -636,9 +629,11 @@ function generateAI(data) {
             totalO += n;
 
             if(d.nama) {
+                // OPTIMALISASI: Menghapus bagian dalam tanda kurung (contoh: " (1 pcs)" atau " (2 pcs)") agar digabungkan menjadi satu produk utama
+                let namaBersih = d.nama.replace(/\s*\(.*?\)/g, '').trim();
 
-                produkPalingLaku[d.nama] =
-                    (produkPalingLaku[d.nama] || 0) + 1;
+                produkPalingLaku[namaBersih] =
+                    (produkPalingLaku[namaBersih] || 0) + 1;
             }
 
         } else {
@@ -663,7 +658,7 @@ function generateAI(data) {
         : "-";
 
 
-    // VALIDASI BARU: Memastikan baris data difilter hanya yang bertipe 'Masuk' sebelum mengambil tanggal unik
+    // VALIDASI: Menyaring tanggal pembagi hanya dari transaksi 'Masuk'
     const daftarTanggal =
         [...new Set(data.filter(d => d.tipe === 'Masuk').map(d => d.tanggal))];
 
