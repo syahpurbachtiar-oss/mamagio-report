@@ -56,7 +56,6 @@
 </head>
 
 <body>
-
     <div class="sidebar">
         <h2>MAMA GIO ADMIN</h2>
         <div class="nav-item active" onclick="switchPage('dashboard', this)">
@@ -66,7 +65,6 @@
             <i class="fas fa-wallet"></i> &nbsp; Cash Flow
         </div>
     </div>
-
     <div class="main">
         <div id="dashboard" class="page-content active">
             <div class="stats-grid">
@@ -103,7 +101,6 @@
                 </div>
             </div>
         </div>
-
         <div id="pengeluaran" class="page-content">
             <div class="page-header"><h2>Detail Cash Flow</h2><p>Analisis bulanan dan riwayat transaksi</p></div>
             <div class="table-card">
@@ -114,15 +111,10 @@
                 <h3 style="margin-top:0; margin-bottom:15px; color:#2c3e50;">Riwayat Transaksi</h3>
                 <div style="overflow-x:auto">
                     <table>
-                        <thead>
-                            <tr><th>Hari</th><th>Tanggal</th><th>Jam</th><th>Tipe</th><th>Transaksi</th><th>Nominal</th></tr>
-                        </thead>
+                        <thead><tr><th>Hari</th><th>Tanggal</th><th>Jam</th><th>Tipe</th><th>Transaksi</th><th>Nominal</th></tr></thead>
                         <tbody id="tableBody"></tbody>
                         <tfoot>
-                            <tr class="summary-row">
-                                <td colspan="4" id="totalQty" style="text-align:right">Jumlah: 0 Item</td>
-                                <td colspan="2" id="totalNominal">Total: Rp 0</td>
-                            </tr>
+                            <tr class="summary-row"><td colspan="4" id="totalQty" style="text-align:right">Jumlah: 0 Item</td><td colspan="2" id="totalNominal">Total: Rp 0</td></tr>
                         </tfoot>
                     </table>
                 </div>
@@ -133,7 +125,6 @@
 <script>
 const AI_URL = "https://warung-mama-gio-ai.syahpurbachtiar.workers.dev";
 const SCRIPT_URL = "https://script.google.com/macros/s/AKfycbzdg_8Wp4EuWGgNoBuUyEWA3onURiKGe8iuhhgzU_QFPFHRnz9q_DdnFSCKd0zwaZ2Q/exec";
-
 let myChartUtama, myChartBulanan;
 
 function switchPage(pageId, element) {
@@ -143,28 +134,18 @@ function switchPage(pageId, element) {
     element.classList.add('active');
 }
 
-// FUNGSI UTAMA FORMAT JAM SERAGAM
 function formatJam(jam) {
     if (!jam) return "-";
     let p = String(jam).replace(/\./g, ':').split(':');
-    let h = p[0].padStart(2, '0');
-    let m = (p[1] || "0").padStart(2, '0');
-    return `${h}:${m}`;
+    return `${p[0].padStart(2, '0')}:${(p[1] || "0").padStart(2, '0')}`;
 }
 
 async function fetchData() {
     try {
         const res = await fetch(SCRIPT_URL);
         const rawData = await res.json();
-        const cleanData = rawData.map(d => ({
-            ...d,
-            nomHarga: parseInt(String(d.harga).replace(/[^0-9]/g, '')) || 0,
-            isOmzet: d.tipe === 'Masuk',
-            jamBersih: formatJam(d.jam)
-        }));
-        updateDashboard(cleanData);
-        renderDetailCashFlow(cleanData);
-        generateAI(cleanData);
+        const cleanData = rawData.map(d => ({ ...d, nomHarga: parseInt(String(d.harga).replace(/[^0-9]/g, '')) || 0, isOmzet: d.tipe === 'Masuk', jamBersih: formatJam(d.jam) }));
+        updateDashboard(cleanData); renderDetailCashFlow(cleanData); generateAI(cleanData);
     } catch(e) { console.error(e); }
 }
 
@@ -184,30 +165,13 @@ function showPieChart(omzet, biaya) {
     document.getElementById('pieChartTitle').innerText = `Omzet = ${pctOmzet}% vs Biaya = ${pctBiaya}%`;
     const ctx = document.getElementById('chartUtama').getContext('2d');
     if(myChartUtama) myChartUtama.destroy();
-    myChartUtama = new Chart(ctx, {
-        type: 'pie',
-        data: { labels: ['Pemasukan', 'Pengeluaran'], datasets: [{ data: [omzet, biaya], backgroundColor: ['#1abc9c', '#e74c3c'], borderWidth: 2 }] },
-        options: { maintainAspectRatio: false, plugins: { legend: { position: 'bottom' } } }
-    });
+    myChartUtama = new Chart(ctx, { type: 'pie', data: { labels: ['Pemasukan', 'Pengeluaran'], datasets: [{ data: [omzet, biaya], backgroundColor: ['#1abc9c', '#e74c3c'], borderWidth: 2 }] }, options: { maintainAspectRatio: false, plugins: { legend: { position: 'bottom' } } } });
 }
 
 function generateAI(data) {
-    let produkPalingLaku = {}, totalO = 0, totalB = 0;
-    data.forEach(d => {
-        if(d.isOmzet) {
-            totalO += d.nomHarga;
-            if(d.nama) {
-                let namaBersih = d.nama.replace(/\s*\(.*?\)/g, '').trim();
-                produkPalingLaku[namaBersih] = (produkPalingLaku[namaBersih] || 0) + 1;
-            }
-        } else { totalB += d.nomHarga; }
-    });
-    let sorted = Object.entries(produkPalingLaku).sort((a,b) => b[1]-a[1]);
-    let hasilAnalisa = `📊 HASIL ANALISA AI MAMA GIO
-Rata-rata Omzet/Hari: Rp ${(Math.round(totalO/1)).toLocaleString('id-ID')}
-Rata-rata Biaya/Hari: Rp ${(Math.round(totalB/1)).toLocaleString('id-ID')}
-Produk Terlaris: ${sorted.length > 0 ? sorted[0][0] : "-"}
-Status Keuangan: ${(totalO - totalB) > 0 ? 'Surplus (Aman)' : 'Defisit'}`;
+    let totalO = 0, totalB = 0;
+    data.forEach(d => { if(d.isOmzet) totalO += d.nomHarga; else totalB += d.nomHarga; });
+    let hasilAnalisa = `📊 HASIL ANALISA AI MAMA GIO\nProfit: Rp ${(totalO - totalB).toLocaleString('id-ID')}\nStatus: ${(totalO - totalB) > 0 ? 'Surplus (Aman)' : 'Defisit'}`;
     document.getElementById('aiAnalysisText').innerText = hasilAnalisa;
 }
 
@@ -219,15 +183,11 @@ function parseToTimestamp(tgl, jam) {
 }
 
 function renderDetailCashFlow(data) {
-    let monthlyStats = {}, totalNominalSemua = 0, qtyItem = 0, barisHtml = "";
+    let monthlyStats = {}, totalNominalSemua = 0, barisHtml = "";
     let sortedData = data.filter(d => d.nama && d.harga).sort((a, b) => parseToTimestamp(b.tanggal, b.jam) - parseToTimestamp(a.tanggal, a.jam));
-
     sortedData.forEach(d => {
-        qtyItem++;
         totalNominalSemua += d.nomHarga;
         barisHtml += `<tr><td>${d.hari||'-'}</td><td>${d.tanggal||'-'}</td><td>${d.jamBersih}</td><td><span class="tipe-badge ${d.isOmzet ? 'tipe-omzet' : 'tipe-biaya'}">${d.isOmzet ? 'Omzet' : 'Biaya'}</span></td><td>${d.nama}</td><td style="color:${d.isOmzet?'#059669':'#dc2626'}">${d.isOmzet?'+':'-'} Rp ${d.nomHarga.toLocaleString('id-ID')}</td></tr>`;
-        
-        // Chart logic
         let parts = d.tanggal.split(/[/\-]/);
         if(parts.length >= 3) {
             let sortKey = parseInt(parts[2]) * 100 + parseInt(parts[1]);
@@ -235,61 +195,46 @@ function renderDetailCashFlow(data) {
             if(d.isOmzet) monthlyStats[sortKey].omzet += d.nomHarga; else monthlyStats[sortKey].biaya += d.nomHarga;
         }
     });
-
     document.getElementById('tableBody').innerHTML = barisHtml;
-    document.getElementById('totalQty').innerText = "Jumlah: " + qtyItem + " Transaksi";
     document.getElementById('totalNominal').innerText = "Total Perputaran: Rp " + totalNominalSemua.toLocaleString('id-ID');
     renderChartBulanan(monthlyStats);
 }
 
 function renderChartBulanan(monthlyStats) {
     let sortedKeys = Object.keys(monthlyStats).sort((a,b) => a - b);
-    new Chart(document.getElementById('chartBulanan').getContext('2d'), {
-        type: 'bar',
-        data: { labels: sortedKeys.map(k => monthlyStats[k].label), datasets: [{ label: 'Pemasukan', data: sortedKeys.map(k => monthlyStats[k].omzet), backgroundColor: '#3b82f6' }, { label: 'Pengeluaran', data: sortedKeys.map(k => monthlyStats[k].biaya), backgroundColor: '#ef4444' }] },
-        options: { responsive: true, maintainAspectRatio: false }
-    });
+    new Chart(document.getElementById('chartBulanan').getContext('2d'), { type: 'bar', data: { labels: sortedKeys.map(k => monthlyStats[k].label), datasets: [{ label: 'Pemasukan', data: sortedKeys.map(k => monthlyStats[k].omzet), backgroundColor: '#3b82f6' }, { label: 'Pengeluaran', data: sortedKeys.map(k => monthlyStats[k].biaya), backgroundColor: '#ef4444' }] }, options: { responsive: true, maintainAspectRatio: false } });
 }
 
-// Fungsi lainnya (simpanBelanja, startVoicePengeluaran, askAI, startVoice) tetap sama
 async function simpanBelanja() {
     const n = document.getElementById('nama').value;
     const h = document.getElementById('harga').value;
-    if(!n || !h) return alert("Isi nama barang dan harga!");
-    const btn = document.getElementById('btnSimpan');
-    btn.innerText = "WAIT..."; btn.disabled = true;
+    if(!n || !h) return alert("Isi data!");
     await fetch(SCRIPT_URL, { method: 'POST', mode: 'no-cors', body: JSON.stringify({ nama: n, harga: parseInt(h), tipe: 'Keluar' }) });
     location.reload();
 }
 
 function startVoicePengeluaran() {
-    const SpeechRecognition = window.SpeechRecognition || window.webkitSpeechRecognition;
-    if(!SpeechRecognition) return alert('Browser tidak mendukung.');
-    const recognition = new SpeechRecognition();
-    recognition.lang = 'id-ID';
-    recognition.start();
-    recognition.onresult = function(event) {
-        const text = event.results[0][0].transcript.toLowerCase();
-        let match = text.match(/(\d+)\s*ribu/);
-        let price = match ? parseInt(match[1]) * 1000 : parseInt(text.replace(/\D/g, ''));
-        document.getElementById('nama').value = text.replace(/\d+/g, '').replace('ribu', '').replace('beli', '').trim();
+    const rec = new (window.SpeechRecognition || window.webkitSpeechRecognition)();
+    rec.lang = 'id-ID';
+    rec.start();
+    document.getElementById('btnMicPengeluaran').classList.add('listening');
+    rec.onresult = (e) => {
+        document.getElementById('btnMicPengeluaran').classList.remove('listening');
+        let text = e.results[0][0].transcript.toLowerCase();
+        // Ambil angka sebagai harga
+        let priceMatch = text.match(/\d+/g);
+        let price = priceMatch ? parseInt(priceMatch[priceMatch.length - 1]) : 0;
+        // Ambil sisanya sebagai nama barang
+        let name = text.replace(/\d+/g, '').replace('ribu', '').replace('rupiah', '').replace('rp', '').replace('beli', '').trim();
+        document.getElementById('nama').value = name;
         document.getElementById('harga').value = price;
         simpanBelanja();
     };
 }
 
-async function askAI() {
-    const input = document.getElementById('userQuestion');
-    const question = input.value.trim();
-    if (!question) return;
-    input.value = "";
-    // Logika askAI sama seperti sebelumnya...
-}
-
-function startVoice() {
-    // Logika startVoice sama...
-}
-
+// Fungsi AI Assistant lainnya...
+async function askAI() { /* ... */ }
+function startVoice() { /* ... */ }
 fetchData();
 </script>
 </body>
