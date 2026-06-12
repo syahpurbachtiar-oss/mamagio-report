@@ -482,12 +482,12 @@ async function fetchData() {
         const res = await fetch(SCRIPT_URL);
         const rawData = await res.json();
         
-        // Meringankan beban CPU dengan pre-processing satu kali
         const cleanData = rawData.map(d => ({
             ...d,
             nomHarga: parseInt(String(d.harga).replace(/[^0-9]/g, '')) || 0,
             isOmzet: d.tipe === 'Masuk',
-            jamBersih: d.jam ? d.jam.split('.').slice(0,2).join('.') : '-'
+            // PERBAIKAN: Menyeragamkan tampilan jam walaupun di sheet memakai titik (:)
+            jamBersih: d.jam ? String(d.jam).replace(':', '.').split('.').slice(0,2).join('.') : '-'
         }));
 
         updateDashboard(cleanData);
@@ -598,23 +598,21 @@ ${profitTotal > 0 ? 'Surplus (Aman)' : 'Defisit (Perlu Evaluasi)'}`;
     document.getElementById('aiAnalysisText').innerText = hasilAnalisa;
 }
 
-// FUNGSI UNTUK MENGUBAH TANGGAL & JAM MENJADI TIMESTAMP UNTUK SORTING
+// PERBAIKAN: Membaca format jam yang memakai titik maupun titik dua
 function parseToTimestamp(tgl, jam) {
     if(!tgl) return 0;
     
-    // Parsing Tanggal (Asumsi format DD/MM/YYYY atau D/M/YYYY)
-    let pTgl = tgl.split(/[/\-]/);
+    let pTgl = String(tgl).split(/[/\-]/);
     let D = parseInt(pTgl[0]) || 1;
-    let M = (parseInt(pTgl[1]) || 1) - 1; // Bulan di Javascript Date dimulai dari 0
+    let M = (parseInt(pTgl[1]) || 1) - 1;
     let Y = parseInt(pTgl[2]) || 2026;
     
-    // Parsing Jam (Asumsi format HH.MM atau HH.MM.SS)
-    let pJam = (jam || "0.0").split('.');
+    // Regex /[.:]/ akan memotong baik jam "03.05" maupun "3:02"
+    let pJam = String(jam || "0:0").split(/[.:]/);
     let h = parseInt(pJam[0]) || 0;
     let m = parseInt(pJam[1]) || 0;
     let s = parseInt(pJam[2]) || 0;
     
-    // Kembalikan nilai milidetik murni
     return new Date(Y, M, D, h, m, s).getTime();
 }
 
@@ -624,11 +622,11 @@ function renderDetailCashFlow(data) {
     let qtyItem = 0;
     let barisHtml = "";
 
-    // MENGURUTKAN SELURUH DATA BERDASARKAN WAKTU TERBARU -> TERLAMA (Campur Omzet & Biaya)
+    // PENGURUTAN MUTLAK: Terbaru di Atas (Descending) berdasarkan waktu riil Timestamp
     let sortedData = data.filter(d => d.nama && d.harga).sort((a, b) => {
         let timeA = parseToTimestamp(a.tanggal, a.jam);
         let timeB = parseToTimestamp(b.tanggal, b.jam);
-        return timeB - timeA; // Descending (Waktu terbaru di atas)
+        return timeB - timeA; 
     });
 
     sortedData.forEach(d => {
@@ -638,7 +636,6 @@ function renderDetailCashFlow(data) {
         let tipeTeks = d.isOmzet ? 'Omzet' : 'Biaya';
         let tipeClass = d.isOmzet ? 'tipe-omzet' : 'tipe-biaya';
 
-        // Susun HTML langsung (Batch Rendering)
         barisHtml += `
             <tr>
                 <td>${d.hari || '-'}</td>
@@ -652,7 +649,6 @@ function renderDetailCashFlow(data) {
             </tr>
         `;
 
-        // Kalkulasi Chart Bulanan
         if(d.tanggal) {
             let parts = d.tanggal.split(/[/\-]/);
             if(parts.length >= 3) {
@@ -675,7 +671,6 @@ function renderDetailCashFlow(data) {
         }
     });
 
-    // Tempelkan seluruh baris sekaligus untuk performa secepat kilat
     document.getElementById('tableBody').innerHTML = barisHtml;
     
     document.getElementById('totalQty').innerText = "Jumlah: " + qtyItem + " Transaksi";
