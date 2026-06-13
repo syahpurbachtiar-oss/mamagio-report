@@ -476,12 +476,24 @@ async function fetchData() {
         
         // 🚀 OPTIMASI PERFORMA: Pre-processing Data Satu Kali di Awal
         // Meringankan beban CPU di HP karena tidak perlu parsing angka berulang-ulang
-        const cleanData = rawData.map(d => ({
-            ...d,
-            nomHarga: parseInt(String(d.harga).replace(/[^0-9]/g, '')) || 0,
-            isOmzet: d.tipe === 'Masuk',
-            jamBersih: d.jam ? d.jam.split('.').slice(0,2).join('.') : '-'
-        }));
+        const cleanData = rawData.map(d => {
+            
+            // REVISI 2: Memaksa format jam menjadi seragam 00:00
+            let formattedTime = '-';
+            if (d.jam) {
+                let parts = String(d.jam).replace(/\./g, ':').split(':');
+                let h = parts[0] ? parts[0].padStart(2, '0') : '00';
+                let m = parts[1] ? parts[1].padStart(2, '0') : '00';
+                formattedTime = `${h}:${m}`;
+            }
+
+            return {
+                ...d,
+                nomHarga: parseInt(String(d.harga).replace(/[^0-9]/g, '')) || 0,
+                isOmzet: d.tipe === 'Masuk',
+                jamBersih: formattedTime
+            };
+        });
 
         updateDashboard(cleanData);
         renderDetailCashFlow(cleanData);
@@ -591,6 +603,24 @@ ${profitTotal > 0 ? 'Surplus (Aman)' : 'Defisit (Perlu Evaluasi)'}`;
     document.getElementById('aiAnalysisText').innerText = hasilAnalisa;
 }
 
+// FUNGSI BANTUAN UNTUK SORTING (Mengubah tanggal & jam jadi angka mutlak)
+function parseToTimestamp(tgl, jamStr) {
+    if (!tgl) return 0;
+    let pTgl = String(tgl).split(/[/\-]/);
+    let D = parseInt(pTgl[0]) || 1;
+    let M = (parseInt(pTgl[1]) || 1) - 1;
+    let Y = parseInt(pTgl[2]) || new Date().getFullYear();
+
+    let h = 0, m = 0;
+    if (jamStr && jamStr !== '-') {
+        let pJam = jamStr.split(':');
+        h = parseInt(pJam[0]) || 0;
+        m = parseInt(pJam[1]) || 0;
+    }
+    
+    return new Date(Y, M, D, h, m).getTime();
+}
+
 // 🚀 OPTIMASI PERFORMA: Batch DOM Rendering
 function renderDetailCashFlow(data) {
     let monthlyStats = {};
@@ -598,10 +628,14 @@ function renderDetailCashFlow(data) {
     let qtyItem = 0;
     let barisHtml = ""; // Variabel penampung string HTML
 
-    // Filter yang valid lalu reverse data
-    let reversedData = data.filter(d => d.nama && d.harga).slice().reverse();
+    // REVISI 1: Filter yang valid lalu sort berdasarkan waktu mutlak (terbaru di atas)
+    let sortedData = data.filter(d => d.nama && d.harga).sort((a, b) => {
+        let timeA = parseToTimestamp(a.tanggal, a.jamBersih);
+        let timeB = parseToTimestamp(b.tanggal, b.jamBersih);
+        return timeB - timeA;
+    });
 
-    reversedData.forEach(d => {
+    sortedData.forEach(d => {
         qtyItem++;
         totalNominalSemua += d.nomHarga;
 
