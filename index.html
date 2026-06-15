@@ -772,7 +772,7 @@ function startVoicePengeluaran() {
         btnMic.classList.remove('listening');
         const text = event.results[0][0].transcript.toLowerCase();
         
-        let cleanText = text.replace(/rp/g, '').replace(/\./g, '').replace(/,/g, '');
+        let cleanText = text.replace(/rupiah/g, '').replace(/rp/g, '').replace(/\./g, '').replace(/,/g, '');
         let price = 0;
         let itemName = cleanText;
 
@@ -788,11 +788,9 @@ function startVoicePengeluaran() {
             }
         }
 
-        itemName = itemName.trim();
-
-        if (itemName.startsWith('beli ')) {
-            itemName = itemName.substring(5).trim();
-        }
+        // TAHAP PEMBERSIHAN FINAL: Hapus kata rupiah, rp, titik, dan spasi ganda secara mutlak.
+        // Bagian yang menghapus kata "beli" SUDAH DIHAPUS.
+        itemName = itemName.replace(/rupiah/g, '').replace(/rp/g, '').replace(/\./g, '').replace(/\s+/g, ' ').trim();
 
         if (itemName === '' || price === 0) {
             alert('Format suara tidak dikenali. Coba sebutkan seperti: "Beli Beras 50 Ribu"');
