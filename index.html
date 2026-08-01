@@ -394,11 +394,9 @@ async function fetchData() {
         const res = await fetch(SCRIPT_URL);
         const rawData = await res.json();
         
-        // 🚀 OPTIMASI PERFORMA: Pre-processing Data Satu Kali di Awal
-        // Meringankan beban CPU di HP karena tidak perlu parsing angka berulang-ulang
+        // 🚀 OPTIMASI PERFORMA & PERBAIKAN DETEKSI TIPE
         const cleanData = rawData.map(d => {
             
-            // REVISI 2: Memaksa format jam menjadi seragam 00:00
             let formattedTime = '-';
             if (d.jam) {
                 let parts = String(d.jam).replace(/\./g, ':').split(':');
@@ -407,10 +405,14 @@ async function fetchData() {
                 formattedTime = `${h}:${m}`;
             }
 
+            // PERBAIKAN: Deteksi tipe omzet agar kebal terhadap salah spasi atau huruf kecil
+            let tipeBersih = String(d.tipe || '').trim().toLowerCase();
+            let isOmzet = (tipeBersih === 'masuk' || tipeBersih === 'pemasukan');
+
             return {
                 ...d,
                 nomHarga: parseInt(String(d.harga).replace(/[^0-9]/g, '')) || 0,
-                isOmzet: d.tipe === 'Masuk',
+                isOmzet: isOmzet,
                 jamBersih: formattedTime
             };
         });
@@ -483,8 +485,14 @@ function generateAI(data) {
         if(d.isOmzet) {
             totalO += d.nomHarga;
             if(d.nama) {
-                let namaBersih = d.nama.replace(/\s*\(.*?\)/g, '').trim();
-                produkPalingLaku[namaBersih] = (produkPalingLaku[namaBersih] || 0) + 1;
+                // PERBAIKAN: Memecah koma pada transaksi majemuk agar Cireng Ayam tidak menumpuk error
+                let items = d.nama.split(',');
+                items.forEach(item => {
+                    let namaBersih = item.replace(/\s*\(.*?\)/g, '').trim().toUpperCase();
+                    if(namaBersih !== '' && namaBersih !== '-') {
+                        produkPalingLaku[namaBersih] = (produkPalingLaku[namaBersih] || 0) + 1;
+                    }
+                });
             }
         } else {
             totalB += d.nomHarga;
@@ -492,15 +500,20 @@ function generateAI(data) {
     });
 
     let sorted = Object.entries(produkPalingLaku).sort((a,b) => b[1]-a[1]);
-    let unggulan = sorted.length > 0 ? sorted[0][0] : "-";
-    let kurangLaku = sorted.length > 1 ? sorted[sorted.length-1][0] : "-";
+    
+    // Fungsi untuk merapikan huruf menjadi Huruf Besar Di Awal Kata (Title Case)
+    function toTitleCase(str) {
+        return str.replace(/\w\S*/g, function(txt){return txt.charAt(0).toUpperCase() + txt.substr(1).toLowerCase();});
+    }
+
+    let unggulan = sorted.length > 0 ? toTitleCase(sorted[0][0]) : "-";
+    let kurangLaku = sorted.length > 1 ? toTitleCase(sorted[sorted.length-1][0]) : "-";
 
     const daftarTanggal = [...new Set(data.filter(d => d.isOmzet).map(d => d.tanggal))];
     const jumlahHari = daftarTanggal.length > 0 ? daftarTanggal.length : 1;
 
     let profitTotal = totalO - totalB;
     
-    // Perhitungan Logika Baru (Bulanan & Keseluruhan)
     let omzetBulan = Math.round((totalO / jumlahHari) * 30);
     let biayaBulan = Math.round((totalB / jumlahHari) * 30);
     let totalNabung = profitTotal;
@@ -524,7 +537,6 @@ ${profitTotal > 0 ? 'Surplus (Aman)' : 'Defisit (Perlu Evaluasi)'}`;
     document.getElementById('aiAnalysisText').innerText = hasilAnalisa;
 }
 
-// FUNGSI BANTUAN UNTUK SORTING (Mengubah tanggal & jam jadi angka mutlak)
 function parseToTimestamp(tgl, jamStr) {
     if (!tgl) return 0;
     let pTgl = String(tgl).split(/[/\-]/);
@@ -542,14 +554,12 @@ function parseToTimestamp(tgl, jamStr) {
     return new Date(Y, M, D, h, m).getTime();
 }
 
-// 🚀 OPTIMASI PERFORMA: Batch DOM Rendering
 function renderDetailCashFlow(data) {
     let monthlyStats = {};
     let totalNominalSemua = 0;
     let qtyItem = 0;
-    let barisHtml = ""; // Variabel penampung string HTML
+    let barisHtml = "";
 
-    // REVISI 1: Filter yang valid lalu sort berdasarkan waktu mutlak (terbaru di atas)
     let sortedData = data.filter(d => d.nama && d.harga).sort((a, b) => {
         let timeA = parseToTimestamp(a.tanggal, a.jamBersih);
         let timeB = parseToTimestamp(b.tanggal, b.jamBersih);
@@ -563,7 +573,6 @@ function renderDetailCashFlow(data) {
         let tipeTeks = d.isOmzet ? 'Omzet' : 'Biaya';
         let tipeClass = d.isOmzet ? 'tipe-omzet' : 'tipe-biaya';
 
-        // Gabungkan teks HTML ke variabel (Tidak melukis tabel per baris di layar)
         barisHtml += `
             <tr>
                 <td>${d.hari || '-'}</td>
@@ -577,7 +586,6 @@ function renderDetailCashFlow(data) {
             </tr>
         `;
 
-        // Chart Bulanan Stats
         if(d.tanggal) {
             let parts = d.tanggal.split(/[/\-]/);
             if(parts.length >= 3) {
@@ -600,7 +608,6 @@ function renderDetailCashFlow(data) {
         }
     });
 
-    // Tempelkan seluruh baris ke layar hanya 1 KALI saja di akhir
     document.getElementById('tableBody').innerHTML = barisHtml;
     
     document.getElementById('totalQty').innerText = "Jumlah: " + qtyItem + " Transaksi";
@@ -709,8 +716,6 @@ function startVoicePengeluaran() {
             }
         }
 
-        // TAHAP PEMBERSIHAN FINAL: Hapus kata rupiah, rp, titik, dan spasi ganda secara mutlak.
-        // Bagian yang menghapus kata "beli" SUDAH DIHAPUS.
         itemName = itemName.replace(/rupiah/g, '').replace(/rp/g, '').replace(/\./g, '').replace(/\s+/g, ' ').trim();
 
         if (itemName === '' || price === 0) {
