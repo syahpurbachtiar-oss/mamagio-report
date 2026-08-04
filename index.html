@@ -394,7 +394,6 @@ async function fetchData() {
         const res = await fetch(SCRIPT_URL);
         const rawData = await res.json();
         
-        // 🚀 OPTIMASI PERFORMA & PERBAIKAN DETEKSI TIPE
         const cleanData = rawData.map(d => {
             
             let formattedTime = '-';
@@ -405,7 +404,6 @@ async function fetchData() {
                 formattedTime = `${h}:${m}`;
             }
 
-            // PERBAIKAN: Deteksi tipe omzet agar kebal terhadap salah spasi atau huruf kecil
             let tipeBersih = String(d.tipe || '').trim().toLowerCase();
             let isOmzet = (tipeBersih === 'masuk' || tipeBersih === 'pemasukan');
 
@@ -480,12 +478,17 @@ function generateAI(data) {
     let produkPalingLaku = {};
     let totalO = 0;
     let totalB = 0;
+    let totalNabungMurni = 0; // Keranjang khusus untuk menghitung tabungan
 
     data.forEach(d => {
+        // Logika SUMIF untuk Nabung: Cari baris yang namanya mengandung kata "nabung"
+        if(d.nama && d.nama.toLowerCase().includes('nabung')) {
+            totalNabungMurni += d.nomHarga;
+        }
+
         if(d.isOmzet) {
             totalO += d.nomHarga;
             if(d.nama) {
-                // PERBAIKAN: Memecah koma pada transaksi majemuk agar Cireng Ayam tidak menumpuk error
                 let items = d.nama.split(',');
                 items.forEach(item => {
                     let namaBersih = item.replace(/\s*\(.*?\)/g, '').trim().toUpperCase();
@@ -501,7 +504,6 @@ function generateAI(data) {
 
     let sorted = Object.entries(produkPalingLaku).sort((a,b) => b[1]-a[1]);
     
-    // Fungsi untuk merapikan huruf menjadi Huruf Besar Di Awal Kata (Title Case)
     function toTitleCase(str) {
         return str.replace(/\w\S*/g, function(txt){return txt.charAt(0).toUpperCase() + txt.substr(1).toLowerCase();});
     }
@@ -512,11 +514,9 @@ function generateAI(data) {
     const daftarTanggal = [...new Set(data.filter(d => d.isOmzet).map(d => d.tanggal))];
     const jumlahHari = daftarTanggal.length > 0 ? daftarTanggal.length : 1;
 
-    let profitTotal = totalO - totalB;
-    
     let omzetBulan = Math.round((totalO / jumlahHari) * 30);
     let biayaBulan = Math.round((totalB / jumlahHari) * 30);
-    let totalNabung = profitTotal;
+    let profitTotal = totalO - totalB;
 
     let hasilAnalisa =
 `Rata-rata Omzet/Bulan:
@@ -524,7 +524,7 @@ Rp ${omzetBulan.toLocaleString('id-ID')}
  Rata-rata Biaya/Bulan:
 Rp ${biayaBulan.toLocaleString('id-ID')}
  Total Nabung:
-Rp ${totalNabung.toLocaleString('id-ID')}
+Rp ${totalNabungMurni.toLocaleString('id-ID')}
  Produk Terlaris:
 ${unggulan}
  Produk Kurang Laku:
