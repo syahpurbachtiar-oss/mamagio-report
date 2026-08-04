@@ -249,6 +249,70 @@
             margin-top: 10px;
         }
 
+        .ai-chat-container {
+            background: #ffffff;
+            padding: 20px;
+            border-radius: 12px;
+            margin-top: 20px;
+            box-shadow: 0 4px 6px rgba(0,0,0,0.05);
+            border-top: 4px solid #6c5ce7;
+        }
+
+        .chat-box {
+            background: #f9f9ff;
+            border: 1px dashed #6c5ce7;
+            border-radius: 10px;
+            padding: 15px;
+            height: 260px;
+            overflow-y: auto;
+            margin-top: 15px;
+        }
+
+        .chat-message {
+            margin-bottom: 15px;
+            line-height: 1.5;
+        }
+
+        .chat-user {
+            color: #0984e3;
+            font-weight: bold;
+        }
+
+        .chat-ai {
+            color: #6c5ce7;
+            font-weight: bold;
+        }
+
+        .chat-input-row {
+            display: flex;
+            gap: 10px;
+            margin-top: 15px;
+        }
+
+        .chat-input-row input {
+            flex: 1;
+        }
+
+        .btn-ai {
+            background: #6c5ce7;
+            color: white;
+            border: none;
+            padding: 12px 18px;
+            border-radius: 8px;
+            cursor: pointer;
+            font-weight: bold;
+        }
+
+        .btn-voice {
+            background: #00b894;
+            color: white;
+            border: none;
+            padding: 12px 18px;
+            border-radius: 8px;
+            cursor: pointer;
+            font-weight: bold;
+        }
+
         @media (max-width: 768px) {
             body {
                 flex-direction: column;
@@ -332,6 +396,21 @@
                 </div>
             </div>
 
+            <div class="ai-chat-container">
+                <b><i class="fas fa-comments"></i> 🎤 AI Assistant Mama Gio</b>
+                <div id="chatBox" class="chat-box">
+                    <div class="chat-message">
+                        <span class="chat-ai">AI:</span>
+                        Halo 👋 Silakan tanyakan apa saja terkait data penjualan, pembeli, produk terlaris, jam ramai, profit, dan pengeluaran.
+                    </div>
+                </div>
+                <div class="chat-input-row">
+                    <input type="text" id="userQuestion" placeholder="Contoh: siapa pembeli terbesar bulan ini?">
+                    <button class="btn-voice" onclick="startVoice()">🎤</button>
+                    <button class="btn-ai" onclick="askAI()">Kirim</button>
+                </div>
+            </div>
+
         </div>
 
         <div id="pengeluaran" class="page-content">
@@ -377,6 +456,7 @@
 
 <script>
 
+const AI_URL = "https://warung-mama-gio-ai.syahpurbachtiar.workers.dev";
 const SCRIPT_URL = "https://script.google.com/macros/s/AKfycbzdg_8Wp4EuWGgNoBuUyEWA3onURiKGe8iuhhgzU_QFPFHRnz9q_DdnFSCKd0zwaZ2Q/exec";
 
 let myChartUtama;
@@ -394,8 +474,11 @@ async function fetchData() {
         const res = await fetch(SCRIPT_URL);
         const rawData = await res.json();
         
+        // 🚀 OPTIMASI PERFORMA: Pre-processing Data Satu Kali di Awal
+        // Meringankan beban CPU di HP karena tidak perlu parsing angka berulang-ulang
         const cleanData = rawData.map(d => {
             
+            // REVISI 2: Memaksa format jam menjadi seragam 00:00
             let formattedTime = '-';
             if (d.jam) {
                 let parts = String(d.jam).replace(/\./g, ':').split(':');
@@ -404,13 +487,10 @@ async function fetchData() {
                 formattedTime = `${h}:${m}`;
             }
 
-            let tipeBersih = String(d.tipe || '').trim().toLowerCase();
-            let isOmzet = (tipeBersih === 'masuk' || tipeBersih === 'pemasukan');
-
             return {
                 ...d,
                 nomHarga: parseInt(String(d.harga).replace(/[^0-9]/g, '')) || 0,
-                isOmzet: isOmzet,
+                isOmzet: d.tipe === 'Masuk',
                 jamBersih: formattedTime
             };
         });
@@ -478,24 +558,13 @@ function generateAI(data) {
     let produkPalingLaku = {};
     let totalO = 0;
     let totalB = 0;
-    let totalNabungMurni = 0; // Keranjang khusus untuk menghitung tabungan
 
     data.forEach(d => {
-        // Logika SUMIF untuk Nabung: Cari baris yang namanya mengandung kata "nabung"
-        if(d.nama && d.nama.toLowerCase().includes('nabung')) {
-            totalNabungMurni += d.nomHarga;
-        }
-
         if(d.isOmzet) {
             totalO += d.nomHarga;
             if(d.nama) {
-                let items = d.nama.split(',');
-                items.forEach(item => {
-                    let namaBersih = item.replace(/\s*\(.*?\)/g, '').trim().toUpperCase();
-                    if(namaBersih !== '' && namaBersih !== '-') {
-                        produkPalingLaku[namaBersih] = (produkPalingLaku[namaBersih] || 0) + 1;
-                    }
-                });
+                let namaBersih = d.nama.replace(/\s*\(.*?\)/g, '').trim();
+                produkPalingLaku[namaBersih] = (produkPalingLaku[namaBersih] || 0) + 1;
             }
         } else {
             totalB += d.nomHarga;
@@ -503,40 +572,38 @@ function generateAI(data) {
     });
 
     let sorted = Object.entries(produkPalingLaku).sort((a,b) => b[1]-a[1]);
-    
-    function toTitleCase(str) {
-        return str.replace(/\w\S*/g, function(txt){return txt.charAt(0).toUpperCase() + txt.substr(1).toLowerCase();});
-    }
-
-    let unggulan = sorted.length > 0 ? toTitleCase(sorted[0][0]) : "-";
-    let kurangLaku = sorted.length > 1 ? toTitleCase(sorted[sorted.length-1][0]) : "-";
+    let unggulan = sorted.length > 0 ? sorted[0][0] : "-";
+    let kurangLaku = sorted.length > 1 ? sorted[sorted.length-1][0] : "-";
 
     const daftarTanggal = [...new Set(data.filter(d => d.isOmzet).map(d => d.tanggal))];
     const jumlahHari = daftarTanggal.length > 0 ? daftarTanggal.length : 1;
 
-    let omzetBulan = Math.round((totalO / jumlahHari) * 30);
-    let biayaBulan = Math.round((totalB / jumlahHari) * 30);
     let profitTotal = totalO - totalB;
+    let avgProfit = Math.round(profitTotal / jumlahHari);
+    let avgOmzet = Math.round(totalO / jumlahHari);
+    let avgBiaya = Math.round(totalB / jumlahHari);
 
     let hasilAnalisa =
-`Rata-rata Omzet/Bulan:
-Rp ${omzetBulan.toLocaleString('id-ID')}
- Rata-rata Biaya/Bulan:
-Rp ${biayaBulan.toLocaleString('id-ID')}
- Total Nabung:
-Rp ${totalNabungMurni.toLocaleString('id-ID')}
+`📊 HASIL ANALISA AI MAMA GIO
+ Rata-rata Omzet/Hari:
+Rp ${avgOmzet.toLocaleString('id-ID')}
+ Rata-rata Biaya/Hari:
+Rp ${avgBiaya.toLocaleString('id-ID')}
+ Rata-rata Profit/Hari:
+Rp ${avgProfit.toLocaleString('id-ID')}
  Produk Terlaris:
 ${unggulan}
  Produk Kurang Laku:
 ${kurangLaku}
- Prediksi Omzet Bulan Depan:
-Rp ${omzetBulan.toLocaleString('id-ID')}
+ Prediksi Omzet Minggu Depan:
+Rp ${(avgOmzet * 7).toLocaleString('id-ID')}
  Status Keuangan:
 ${profitTotal > 0 ? 'Surplus (Aman)' : 'Defisit (Perlu Evaluasi)'}`;
 
     document.getElementById('aiAnalysisText').innerText = hasilAnalisa;
 }
 
+// FUNGSI BANTUAN UNTUK SORTING (Mengubah tanggal & jam jadi angka mutlak)
 function parseToTimestamp(tgl, jamStr) {
     if (!tgl) return 0;
     let pTgl = String(tgl).split(/[/\-]/);
@@ -554,12 +621,14 @@ function parseToTimestamp(tgl, jamStr) {
     return new Date(Y, M, D, h, m).getTime();
 }
 
+// 🚀 OPTIMASI PERFORMA: Batch DOM Rendering
 function renderDetailCashFlow(data) {
     let monthlyStats = {};
     let totalNominalSemua = 0;
     let qtyItem = 0;
-    let barisHtml = "";
+    let barisHtml = ""; // Variabel penampung string HTML
 
+    // REVISI 1: Filter yang valid lalu sort berdasarkan waktu mutlak (terbaru di atas)
     let sortedData = data.filter(d => d.nama && d.harga).sort((a, b) => {
         let timeA = parseToTimestamp(a.tanggal, a.jamBersih);
         let timeB = parseToTimestamp(b.tanggal, b.jamBersih);
@@ -573,6 +642,7 @@ function renderDetailCashFlow(data) {
         let tipeTeks = d.isOmzet ? 'Omzet' : 'Biaya';
         let tipeClass = d.isOmzet ? 'tipe-omzet' : 'tipe-biaya';
 
+        // Gabungkan teks HTML ke variabel (Tidak melukis tabel per baris di layar)
         barisHtml += `
             <tr>
                 <td>${d.hari || '-'}</td>
@@ -586,6 +656,7 @@ function renderDetailCashFlow(data) {
             </tr>
         `;
 
+        // Chart Bulanan Stats
         if(d.tanggal) {
             let parts = d.tanggal.split(/[/\-]/);
             if(parts.length >= 3) {
@@ -608,6 +679,7 @@ function renderDetailCashFlow(data) {
         }
     });
 
+    // Tempelkan seluruh baris ke layar hanya 1 KALI saja di akhir
     document.getElementById('tableBody').innerHTML = barisHtml;
     
     document.getElementById('totalQty').innerText = "Jumlah: " + qtyItem + " Transaksi";
@@ -716,6 +788,8 @@ function startVoicePengeluaran() {
             }
         }
 
+        // TAHAP PEMBERSIHAN FINAL: Hapus kata rupiah, rp, titik, dan spasi ganda secara mutlak.
+        // Bagian yang menghapus kata "beli" SUDAH DIHAPUS.
         itemName = itemName.replace(/rupiah/g, '').replace(/rp/g, '').replace(/\./g, '').replace(/\s+/g, ' ').trim();
 
         if (itemName === '' || price === 0) {
@@ -730,6 +804,82 @@ function startVoicePengeluaran() {
 
     recognition.onerror = function() { btnMic.classList.remove('listening'); };
     recognition.onend = function() { btnMic.classList.remove('listening'); };
+}
+
+async function askAI() {
+    const input = document.getElementById('userQuestion');
+    const chatBox = document.getElementById('chatBox');
+    const question = input.value.trim();
+
+    if (!question) return;
+
+    chatBox.innerHTML += `
+        <div class="chat-message">
+            <span class="chat-user">User:</span>
+            ${question}
+        </div>
+    `;
+
+    input.value = "";
+
+    try {
+        chatBox.innerHTML += `
+            <div id="loadingAI" class="chat-message">
+                <span class="chat-ai">AI:</span> Sedang berpikir...
+            </div>
+        `;
+
+        const response = await fetch(AI_URL, {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({ question: question })
+        });
+
+        const raw = await response.text();
+        const loading = document.getElementById('loadingAI');
+        if(loading) loading.remove();
+
+        let result = {};
+        try { result = JSON.parse(raw); } catch(e){ console.error(e); }
+
+        let jawaban = result.answer || raw || "AI tidak dapat memberikan jawaban.";
+
+        chatBox.innerHTML += `
+            <div class="chat-message">
+                <span class="chat-ai">AI:</span>
+                ${jawaban}
+            </div>
+        `;
+
+        chatBox.scrollTop = chatBox.scrollHeight;
+
+        if ('speechSynthesis' in window) {
+            speechSynthesis.cancel();
+            const utter = new SpeechSynthesisUtterance(jawaban.replace(/<br>/g, '. '));
+            utter.lang = 'id-ID';
+            speechSynthesis.speak(utter);
+        }
+
+    } catch(err){
+        console.error(err);
+        chatBox.innerHTML += `<div class="chat-message" style="color:red;">Error AI: ${err.message}</div>`;
+    }
+}
+
+function startVoice() {
+    const SpeechRecognition = window.SpeechRecognition || window.webkitSpeechRecognition;
+    if(!SpeechRecognition){
+        alert('Browser tidak mendukung voice');
+        return;
+    }
+    const recognition = new SpeechRecognition();
+    recognition.lang = 'id-ID';
+    recognition.start();
+
+    recognition.onresult = function(event){
+        document.getElementById('userQuestion').value = event.results[0][0].transcript;
+        askAI();
+    };
 }
 
 fetchData();
